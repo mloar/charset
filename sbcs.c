@@ -43,9 +43,9 @@ int write_sbcs(charset_spec const *charset, long int input_chr,
     while (i+1 < j) {
 	k = (i+j)/2;
 	c = sd->ucs2sbcs[k];
-	if (input_chr < sd->sbcs2ucs[c])
+	if (input_chr < (long int)sd->sbcs2ucs[c])
 	    j = k;
-	else if (input_chr > sd->sbcs2ucs[c])
+	else if (input_chr > (long int)sd->sbcs2ucs[c])
 	    i = k;
 	else {
 	    emit(emitctx, c);

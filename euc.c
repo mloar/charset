@@ -79,7 +79,8 @@ static void read_euc(charset_spec const *charset, long int input_chr,
      * it.
      */
     if (state->s0 != 0 &&
-	((state->s0 & 0x0F000000) >> 24) >= euc->nchars[(state->s0 >> 28)-1]) {
+	((state->s0 & 0x0F000000) >> 24) >=
+	(unsigned)euc->nchars[(state->s0 >> 28)-1]) {
 	emit(emitctx, euc->to_ucs(state->s0));
 	state->s0 = 0;
     }

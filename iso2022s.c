@@ -344,7 +344,7 @@ static int write_iso2022s(charset_spec const *charset, long int input_chr,
      * to the effort of emitting the sequence.
      */
     cont = iso->escapes[i].container;
-    if (((state->s1 >> (6*cont)) & 0x3F) != subcharset) {
+    if (((state->s1 >> (6*cont)) & 0x3F) != (unsigned)subcharset) {
 	for (j = 0; iso->escapes[i].sequence[j]; j++)
 	    emit(emitctx, iso->escapes[i].sequence[j]);
 	state->s1 &= iso->escapes[i].andbits;
@@ -362,7 +362,7 @@ static int write_iso2022s(charset_spec const *charset, long int input_chr,
     } else {
 	/* Emit SI or SO, but only if the current container isn't already
 	 * the right one. */
-	if (((state->s1 >> 28) & 7) != cont) {
+	if (((state->s1 >> 28) & 7) != (unsigned)cont) {
 	    emit(emitctx, cont ? SO : SI);
 	    state->s1 = (state->s1 & 0x8FFFFFFF) | (cont << 28);
 	}

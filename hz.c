@@ -110,7 +110,7 @@ static int write_hz(charset_spec const *charset, long int input_chr,
 	return FALSE;
     }
 
-    if (state->s0 != desired_state) {
+    if (state->s0 != (unsigned)desired_state) {
 	emit(emitctx, '~');
 	emit(emitctx, desired_state ? '{' : '}');
 	state->s0 = desired_state;
