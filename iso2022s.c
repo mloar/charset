@@ -693,6 +693,7 @@ static struct iso2022_escape ctext_escapes[] = {
     SEQ("\033$)C", 1, CTEXT_KSC5601),
     SEQ("\033(B", 0, CTEXT_ASCII),
     SEQ("\033(J", 0, CTEXT_JISX0201_LEFT),
+    SEQ("\033)I", 1, CTEXT_JISX0201_RIGHT),
     SEQ("\033-A", 1, CTEXT_ISO8859_1),
     SEQ("\033-B", 1, CTEXT_ISO8859_2),
     SEQ("\033-C", 1, CTEXT_ISO8859_3),
@@ -700,14 +701,13 @@ static struct iso2022_escape ctext_escapes[] = {
     SEQ("\033-F", 1, CTEXT_ISO8859_7),
     SEQ("\033-G", 1, CTEXT_ISO8859_6),
     SEQ("\033-H", 1, CTEXT_ISO8859_8),
-    SEQ("\033)I", 1, CTEXT_JISX0201_RIGHT),
     SEQ("\033-L", 1, CTEXT_ISO8859_5),
     SEQ("\033-M", 1, CTEXT_ISO8859_9),
 };
 static struct iso2022 ctext = {
     ctext_escapes, lenof(ctext_escapes),
     "\1\1\1\1\1\1\1\1\1\1\1\1\2\2\2",  /* must match the enum above */
-    "", 0x80000000 | (CTEXT_ASCII<<0) | (CTEXT_ASCII<<6), "", TRUE,
+    "", 0x80000000 | (CTEXT_ASCII<<0) | (CTEXT_ISO8859_1<<6), "", TRUE,
     ctext_to_ucs, ctext_from_ucs
 };
 const charset_spec charset_CS_CTEXT = {
