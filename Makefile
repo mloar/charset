@@ -28,6 +28,9 @@
 #    is to get those targets out of the way for the Makefile
 #    fragment including us.)
 #
+#  - If you need your compiler to use the -MD flag, define $(MD) to
+#    be `-MD'.
+#
 # This Makefile fragment will then define rules for building each
 # object file, and will in turn define $(LIBCHARSET_OBJS) to be
 # what you need to add to your link line.
@@ -74,106 +77,106 @@ $(LIBCHARSET_OBJDIR)libcharset.a: $(LIBCHARSET_OBJS)
 
 $(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)big5enc.o: \
 	$(LIBCHARSET_SRCDIR)big5enc.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(MD) -c -o $@ $<
 
 $(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)big5set.o: \
 	$(LIBCHARSET_SRCDIR)big5set.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(MD) -c -o $@ $<
 
 $(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)cp949.o: \
 	$(LIBCHARSET_SRCDIR)cp949.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(MD) -c -o $@ $<
 
 $(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)euc.o: \
 	$(LIBCHARSET_SRCDIR)euc.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(MD) -c -o $@ $<
 
 $(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)fromucs.o: \
 	$(LIBCHARSET_SRCDIR)fromucs.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(MD) -c -o $@ $<
 
 $(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)gb2312.o: \
 	$(LIBCHARSET_SRCDIR)gb2312.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(MD) -c -o $@ $<
 
 $(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)hz.o: \
 	$(LIBCHARSET_SRCDIR)hz.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(MD) -c -o $@ $<
 
 $(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)iso2022s.o: \
 	$(LIBCHARSET_SRCDIR)iso2022s.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(MD) -c -o $@ $<
 
 $(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)istate.o: \
 	$(LIBCHARSET_SRCDIR)istate.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(MD) -c -o $@ $<
 
 $(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)jisx0208.o: \
 	$(LIBCHARSET_SRCDIR)jisx0208.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(MD) -c -o $@ $<
 
 $(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)jisx0212.o: \
 	$(LIBCHARSET_SRCDIR)jisx0212.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(MD) -c -o $@ $<
 
 $(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)ksx1001.o: \
 	$(LIBCHARSET_SRCDIR)ksx1001.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(MD) -c -o $@ $<
 
 $(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)localenc.o: \
 	$(LIBCHARSET_SRCDIR)localenc.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(MD) -c -o $@ $<
 
 $(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)macenc.o: \
 	$(LIBCHARSET_SRCDIR)macenc.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(MD) -c -o $@ $<
 
 $(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)mimeenc.o: \
 	$(LIBCHARSET_SRCDIR)mimeenc.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(MD) -c -o $@ $<
 
 $(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)sbcs.o: \
 	$(LIBCHARSET_SRCDIR)sbcs.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(MD) -c -o $@ $<
 
 $(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)shiftjis.o: \
 	$(LIBCHARSET_SRCDIR)shiftjis.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(MD) -c -o $@ $<
 
 $(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)slookup.o: \
 	$(LIBCHARSET_SRCDIR)slookup.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(MD) -c -o $@ $<
 
 $(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)superset.o: \
 	$(LIBCHARSET_SRCDIR)superset.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(MD) -c -o $@ $<
 
 $(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)toucs.o: \
 	$(LIBCHARSET_SRCDIR)toucs.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(MD) -c -o $@ $<
 
 $(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)utf16.o: \
 	$(LIBCHARSET_SRCDIR)utf16.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(MD) -c -o $@ $<
 
 $(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)utf7.o: \
 	$(LIBCHARSET_SRCDIR)utf7.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(MD) -c -o $@ $<
 
 $(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)utf8.o: \
 	$(LIBCHARSET_SRCDIR)utf8.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(MD) -c -o $@ $<
 
 $(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)xenc.o: \
 	$(LIBCHARSET_SRCDIR)xenc.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(MD) -c -o $@ $<
 
 # This object file is special, because its source file is itself
 # generated - and therefore goes in the object directory.
 
 $(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)sbcsdat.o: \
 	$(LIBCHARSET_OBJDIR)sbcsdat.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(MD) -c -o $@ $<
 
 $(LIBCHARSET_OBJDIR)sbcsdat.c: \
 	$(LIBCHARSET_SRCDIR)sbcs.dat \
