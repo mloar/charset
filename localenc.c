@@ -74,6 +74,8 @@ static const struct {
     { "HP ROMAN8", CS_HP_ROMAN8, 1 },
     { "DEC MCS", CS_DEC_MCS, 1 },
     { "UTF-8", CS_UTF8, 1 },
+    { "UTF-7", CS_UTF7, 1 },
+    { "UTF-7-conservative", CS_UTF7_CONSERVATIVE, 1 },
     { "EUC-CN", CS_EUC_CN, 1 },
     { "EUC-KR", CS_EUC_KR, 1 },
     { "EUC-JP", CS_EUC_JP, 1 },

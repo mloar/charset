@@ -67,6 +67,8 @@ typedef enum {
     CS_HP_ROMAN8,
     CS_DEC_MCS,
     CS_UTF8,
+    CS_UTF7,
+    CS_UTF7_CONSERVATIVE,
     CS_UTF16,
     CS_UTF16BE,
     CS_UTF16LE,

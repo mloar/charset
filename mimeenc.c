@@ -175,7 +175,11 @@ static const struct {
     { "csDECMCS", CS_DEC_MCS },
 
     { "UTF-8", CS_UTF8 },
-    
+
+    { "UTF-7", CS_UTF7 },
+    { "UNICODE-1-1-UTF-7", CS_UTF7 },
+    { "csUnicode11UTF7", CS_UTF7 },
+
     /*
      * Quite why the EUC-CN encoding is known to MIME by the name
      * of its underlying character set, I'm not entirely sure, but

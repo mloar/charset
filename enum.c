@@ -16,6 +16,7 @@
 #define ENUM_CHARSETS
 #include "sbcsdat.c"
 #include "utf8.c"
+#include "utf7.c"
 #include "utf16.c"
 #include "euc.c"
 #include "iso2022s.c"
