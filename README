@@ -16,7 +16,9 @@ not currently support. Those that I know of are:
 
  - Johab. There is no reason why we _shouldn't_ support this, but it
    wasn't immediately necessary at the time I did the initial
-   coding. If anyone needs it, it shouldn't be too hard.
+   coding. If anyone needs it, it shouldn't be too hard. The Unicode
+   mapping table for the encoding is available at
+   http://www.unicode.org/Public/MAPPINGS/OBSOLETE/EASTASIA/KSC/JOHAB.TXT
 
  - ISO-2022-JP-1 (RFC 2237), and ISO-2022-JP-2 (RFC 1554). These
    should be even easier if required - we already have the ISO 2022
@@ -24,15 +26,13 @@ not currently support. Those that I know of are:
    sets.
 
  - ISO-2022-CN and ISO-2022-CN-EXT (RFC 1922), and EUC-TW. These
-   encodings depend on the CNS 11643-1992 character set, and I don't
-   know where to find mapping tables between that and Unicode.
-   (There is a CNS11643.TXT on unicode.org, but it's CNS 11643-1986,
-   which is very different. The 1986 revision contains planes
-   numbered 1, 2 and 14, whereas the 1992 one contains planes 1-7.)
-   GNU iconv appears to have mapping tables for the 1992 revision,
-   but it's under GPL so I can't lift them from there. If anyone
-   needs these encodings supporting, they will have to supply a
-   source of mapping tables.
+   encodings depend on the CNS 11643-1992 character set. Mapping
+   table data for this set is available from unicode.org, but only
+   in the Unihan database
+   ftp://ftp.unicode.org/Public/UNIDATA/Unihan.zip
 
- - Big Five Plus, and the Hong Kong extension to Big5. I don't have
-   mapping tables for either of these either.
+ - The Hong Kong (HKSCS) extension to Big5. Again, mapping tables
+   are available in the Unihan database.
+
+ - Other Big Five extensions, which I don't have mapping tables for
+   at all.
