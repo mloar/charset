@@ -84,6 +84,19 @@ void write_sbcs(charset_spec const *charset, long int input_chr,
 		charset_state *state,
 		void (*emit)(void *ctx, long int output), void *emitctx);
 
+long int big5_to_unicode(int r, int c);
+int unicode_to_big5(long int unicode, int *r, int *c);
+long int cp949_to_unicode(int r, int c);
+int unicode_to_cp949(long int unicode, int *r, int *c);
+long int ksx1001_to_unicode(int r, int c);
+int unicode_to_ksx1001(long int unicode, int *r, int *c);
+long int gb2312_to_unicode(int r, int c);
+int unicode_to_gb2312(long int unicode, int *r, int *c);
+long int jisx0208_to_unicode(int r, int c);
+int unicode_to_jisx0208(long int unicode, int *r, int *c);
+long int jisx0212_to_unicode(int r, int c);
+int unicode_to_jisx0212(long int unicode, int *r, int *c);
+
 /*
  * Placate compiler warning about unused parameters, of which we
  * expect to have some in this library.
