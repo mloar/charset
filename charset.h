@@ -66,7 +66,10 @@ typedef enum {
     CS_VISCII,
     CS_HP_ROMAN8,
     CS_DEC_MCS,
-    CS_UTF8
+    CS_UTF8,
+    CS_EUC_JP,
+    CS_EUC_CN,
+    CS_EUC_KR,
 } charset_t;
 
 typedef struct {

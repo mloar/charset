@@ -16,4 +16,5 @@
 #define ENUM_CHARSETS
 #include "sbcsdat.c"
 #include "utf8.c"
+#include "euc.c"
 #undef ENUM_CHARSETS

@@ -175,6 +175,13 @@ static const struct {
     { "csDECMCS", CS_DEC_MCS },
 
     { "UTF-8", CS_UTF8 },
+    
+    /*
+     * Quite why the EUC-CN encoding is known to MIME by the name
+     * of its underlying character set, I'm not entirely sure, but
+     * it is. Shrug.
+     */
+    { "GB2312", CS_EUC_CN },
 };
 
 const char *charset_to_mimeenc(int charset)
