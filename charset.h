@@ -115,7 +115,8 @@ typedef struct {
  * U+FFFD (REPLACEMENT CHARACTER).
  */
 
-int charset_to_unicode(char **input, int *inlen, wchar_t *output, int outlen,
+int charset_to_unicode(const char **input, int *inlen,
+		       wchar_t *output, int outlen,
 		       int charset, charset_state *state,
 		       const wchar_t *errstr, int errlen);
 
@@ -142,7 +143,8 @@ int charset_to_unicode(char **input, int *inlen, wchar_t *output, int outlen,
  * at the end of an output piece of text.
  */
 
-int charset_from_unicode(wchar_t **input, int *inlen, char *output, int outlen,
+int charset_from_unicode(const wchar_t **input, int *inlen,
+			 char *output, int outlen,
 			 int charset, charset_state *state,
 			 const char *errstr, int errlen);
 
