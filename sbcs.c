@@ -56,11 +56,17 @@ int write_sbcs(charset_spec const *charset, long int input_chr,
 	       void (*emit)(void *ctx, long int output), void *emitctx)
 {
     const struct sbcs_data *sd = charset->data;
+    long int ret;
 
     UNUSEDARG(state);
 
     if (input_chr == -1)
 	return TRUE;		       /* stateless; no cleanup required */
 
-    emit(emitctx, sbcs_from_unicode(sd, input_chr));
+    ret = sbcs_from_unicode(sd, input_chr);
+    if (ret == ERROR)
+	return FALSE;
+
+    emit(emitctx, ret);
+    return TRUE;
 }

@@ -679,7 +679,7 @@ static int ctext_from_ucs(long int ucs, int *subcharset, unsigned long *bytes)
     }
 }
 #define SEQ(str,cont,cs) \
-    {str,~(63<<(6*((cont&~RO)))),(cs)<<(6*((cont&~RO))),(cont),(cs)}
+    {str,~(63<<(6*(((cont)&~RO)))),(cs)<<(6*(((cont)&~RO))),(cont),(cs)}
 /*
  * Compound text defines restrictions on which container can take
  * which character sets. Things labelled `left half of' can only go
