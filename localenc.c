@@ -6,6 +6,12 @@
  * enumeration functions which return a list of supported
  * encodings one by one.
  * 
+ * Also in this table are other ways people might plausibly refer
+ * to a charset (for example, Win1252 as well as CP1252). Where
+ * more than one string is given for a particular character set,
+ * the first one is the canonical one returned by
+ * charset_to_localenc.
+ * 
  * charset_from_localenc will attempt all other text translations
  * as well as this table, to maximise the number of different ways
  * you can select a supported charset.
@@ -41,14 +47,23 @@ static const struct {
     { "CP437", CS_CP437, 1 },
     { "CP850", CS_CP850, 1 },
     { "CP1250", CS_CP1250, 1 },
+    { "Win1250", CS_CP1250, 1 },
     { "CP1251", CS_CP1251, 1 },
+    { "Win1251", CS_CP1251, 1 },
     { "CP1252", CS_CP1252, 1 },
+    { "Win1252", CS_CP1252, 1 },
     { "CP1253", CS_CP1253, 1 },
+    { "Win1253", CS_CP1253, 1 },
     { "CP1254", CS_CP1254, 1 },
+    { "Win1254", CS_CP1254, 1 },
     { "CP1255", CS_CP1255, 1 },
+    { "Win1255", CS_CP1255, 1 },
     { "CP1256", CS_CP1256, 1 },
+    { "Win1256", CS_CP1256, 1 },
     { "CP1257", CS_CP1257, 1 },
+    { "Win1257", CS_CP1257, 1 },
     { "CP1258", CS_CP1258, 1 },
+    { "Win1258", CS_CP1258, 1 },
     { "KOI8-R", CS_KOI8_R, 1 },
     { "KOI8-U", CS_KOI8_U, 1 },
     { "KOI8-RU", CS_KOI8_RU, 1 },
