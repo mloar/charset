@@ -1,6 +1,6 @@
 /*
- * test.c - general test program which converts between two
- * arbitrary charsets.
+ * test.c - general libcharset test/demo program which converts
+ * between two arbitrary charsets.
  */
 
 #include <stdio.h>
@@ -21,7 +21,7 @@ int main(int argc, char **argv)
     int rdret, inlen, midlen, inret, midret;
 
     if (argc != 3) {
-	fprintf(stderr, "usage: test <charset> <charset>\n");
+	fprintf(stderr, "usage: convcs <charset> <charset>\n");
 	return 1;
     }
 
@@ -53,7 +53,7 @@ int main(int argc, char **argv)
 	    midptr = midbuf;
 	    while ( (midret = charset_from_unicode(&midptr, &midlen, outbuf,
 						   lenof(outbuf), dstset,
-						   &outstate, NULL, 0)) > 0) {
+						   &outstate, NULL)) > 0) {
 		fwrite(outbuf, 1, midret, stdout);
 	    }
 	}
@@ -64,7 +64,7 @@ int main(int argc, char **argv)
      */
     while ( (midret = charset_from_unicode(NULL, NULL, outbuf,
 					   lenof(outbuf), dstset,
-					   &outstate, NULL, 0)) > 0) {
+					   &outstate, NULL)) > 0) {
 	fwrite(outbuf, 1, midret, stdout);
     }
 

@@ -6,6 +6,7 @@
 $infile = "sbcs.dat";
 $infile = shift @ARGV if defined $ARGV[0];
 $outfile = "sbcsdat.c";
+$outfile = shift @ARGV if defined $ARGV[0];
 
 open FOO, $infile;
 open BAR, ">$outfile";
