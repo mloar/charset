@@ -16,8 +16,8 @@ int main(int argc, char **argv)
     charset_state outstate = CHARSET_INIT_STATE;
     char inbuf[256], outbuf[256];
     wchar_t midbuf[256];
-    char *inptr;
-    wchar_t *midptr;
+    const char *inptr;
+    const wchar_t *midptr;
     int rdret, inlen, midlen, inret, midret;
 
     if (argc != 3) {
