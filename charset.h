@@ -207,4 +207,15 @@ int charset_upgrade(int charset);
  */
 int charset_contains_ascii(int charset);
 
+/*
+ * This function tries to deduce the CS_* identifier of the charset
+ * used in the current C locale. It falls back to CS_ASCII if it
+ * can't figure it out at all, so it will always return a valid
+ * charset.
+ * 
+ * (Note that you should have already called setlocale(LC_CTYPE,
+ * "") to guarantee that this function will do the right thing.)
+ */
+int charset_from_locale(void);
+
 #endif /* charset_charset_h */
