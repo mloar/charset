@@ -33,7 +33,7 @@ static const struct {
     { "ISO_646.irv:1991", CS_ASCII },
     { "ASCII", CS_ASCII },
     { "ISO646-US", CS_ASCII },
-    { "US-ASCII (preferred MIME name)", CS_ASCII },
+    { "US-ASCII", CS_ASCII },
     { "us", CS_ASCII },
     { "IBM367", CS_ASCII },
     { "cp367", CS_ASCII },
