@@ -11,6 +11,11 @@
 /* This is an invalid Unicode value used to indicate an error. */
 #define ERROR 0xFFFFL		       /* Unicode value representing error */
 
+#undef TRUE
+#define TRUE 1
+#undef FALSE
+#define FALSE 0
+
 typedef struct charset_spec charset_spec;
 typedef struct sbcs_data sbcs_data;
 
@@ -29,16 +34,19 @@ struct charset_spec {
     /*
      * A function to read Unicode characters and output in this
      * character set. The `emit' function expects to get byte
-     * values passed to it; it should be sent ERROR for any
-     * non-representable characters on the input.
+     * values passed to it.
+     * 
+     * A non-representable input character should cause a FALSE
+     * return, _before_ `emit' is called. Successful conversion
+     * causes a TRUE return.
      * 
      * If `input_chr' is -1, this function must revert the encoding
      * state to any default required at the end of a piece of
      * encoded text.
      */
-    void (*write)(charset_spec const *charset, long int input_chr,
-		  charset_state *state,
-		  void (*emit)(void *ctx, long int output), void *emitctx);
+    int (*write)(charset_spec const *charset, long int input_chr,
+		 charset_state *state,
+		 void (*emit)(void *ctx, long int output), void *emitctx);
     void const *data;
 };
 
@@ -80,9 +88,9 @@ charset_spec const *charset_find_spec(int charset);
 void read_sbcs(charset_spec const *charset, long int input_chr,
 	       charset_state *state,
 	       void (*emit)(void *ctx, long int output), void *emitctx);
-void write_sbcs(charset_spec const *charset, long int input_chr,
-		charset_state *state,
-		void (*emit)(void *ctx, long int output), void *emitctx);
+int write_sbcs(charset_spec const *charset, long int input_chr,
+	       charset_state *state,
+	       void (*emit)(void *ctx, long int output), void *emitctx);
 
 long int big5_to_unicode(int r, int c);
 int unicode_to_big5(long int unicode, int *r, int *c);

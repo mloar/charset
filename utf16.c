@@ -154,10 +154,10 @@ static void emithl(void (*emit)(void *ctx, long int output), void *emitctx,
     }
 }
 
-static void write_utf16(charset_spec const *charset, long int input_chr,
-			charset_state *state,
-			void (*emit)(void *ctx, long int output),
-			void *emitctx)
+static int write_utf16(charset_spec const *charset, long int input_chr,
+		       charset_state *state,
+		       void (*emit)(void *ctx, long int output),
+		       void *emitctx)
 {
     struct utf16 const *utf = (struct utf16 *)charset->data;
 
@@ -168,15 +168,14 @@ static void write_utf16(charset_spec const *charset, long int input_chr,
      */
 
     if (input_chr < 0)
-	return;			       /* no cleanup required */
+	return TRUE;		       /* no cleanup required */
 
     if ((input_chr >= 0xD800 && input_chr < 0xE000) ||
 	input_chr >= 0x110000) {
 	/*
 	 * We can't output surrogates, or anything above 0x10FFFF.
 	 */
-	emit(emitctx, ERROR);
-	return;
+	return FALSE;
     }
 
     if (!state->s0) {
@@ -192,6 +191,7 @@ static void write_utf16(charset_spec const *charset, long int input_chr,
 	emithl(emit, emitctx, utf->s0, 0xD800 | ((input_chr >> 10) & 0x3FF));
 	emithl(emit, emitctx, utf->s0, 0xDC00 | (input_chr & 0x3FF));
     }
+    return TRUE;
 }
 
 static const struct utf16 utf16_bigendian = { 0x20000 };

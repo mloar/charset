@@ -126,17 +126,19 @@ int charset_to_unicode(const char **input, int *inlen,
  * This routine accepts some number of Unicode characters, updates
  * a state variable, and outputs some number of bytes.
  * 
- * Returns the number of bytes characters output; will never output
- * more than the size of the buffer (as specified on input), and
- * will never output a partial MB character. Advances the `input'
- * pointer and decrements `inlen', to indicate how far along the
- * input string it got.
+ * Returns the number of bytes output; will never output more than
+ * the size of the buffer (as specified on input), and will never
+ * output a partial MB character. Advances the `input' pointer and
+ * decrements `inlen', to indicate how far along the input string
+ * it got.
  * 
- * The sequence of `errlen' characters pointed to by `errstr' will
- * be used to indicate a conversion error. If `errstr' is NULL,
- * `errlen' will be ignored, and the library will choose something
- * sensible to do on its own (which will vary depending on the
- * output charset).
+ * If `error' is non-NULL and a character is found which cannot be
+ * expressed in the output charset, conversion will terminate at
+ * that character (so `input' points to the offending character)
+ * and `*error' will be set to TRUE; if `error' is non-NULL and no
+ * difficult characters are encountered, `*error' will be set to
+ * FALSE. If `error' is NULL, difficult characters will simply be
+ * ignored.
  * 
  * If `input' is NULL, this routine will output the necessary bytes
  * to reset the encoding state in any way which might be required
@@ -145,8 +147,7 @@ int charset_to_unicode(const char **input, int *inlen,
 
 int charset_from_unicode(const wchar_t **input, int *inlen,
 			 char *output, int outlen,
-			 int charset, charset_state *state,
-			 const char *errstr, int errlen);
+			 int charset, charset_state *state, int *error);
 
 /*
  * Convert X11 encoding names to and from our charset identifiers.

@@ -8,33 +8,16 @@
 struct charset_emit_param {
     char *output;
     int outlen;
-    const char *errstr;
-    int errlen;
     int stopped;
 };
 
 static void charset_emit(void *ctx, long int output)
 {
     struct charset_emit_param *param = (struct charset_emit_param *)ctx;
-    char outval;
-    char const *p;
-    int outlen;
 
-    if (output == ERROR) {
-	p = param->errstr;
-	outlen = param->errlen;
-    } else {
-	outval = output;
-	p = &outval;
-	outlen = 1;
-    }
-
-    if (param->outlen >= outlen) {
-	while (outlen > 0) {
-	    *param->output++ = *p++;
-	    param->outlen--;
-	    outlen--;
-	}
+    if (param->outlen > 0) {
+	*param->output++ = output;
+	param->outlen--;
     } else {
 	param->stopped = 1;
     }
@@ -42,8 +25,7 @@ static void charset_emit(void *ctx, long int output)
 
 int charset_from_unicode(const wchar_t **input, int *inlen,
 			 char *output, int outlen,
-			 int charset, charset_state *state,
-			 const char *errstr, int errlen)
+			 int charset, charset_state *state, int *error)
 {
     charset_spec const *spec = charset_find_spec(charset);
     charset_state localstate = CHARSET_INIT_STATE;
@@ -59,26 +41,28 @@ int charset_from_unicode(const wchar_t **input, int *inlen,
     param.outlen = outlen;
     param.stopped = 0;
 
-    /*
-     * charset_emit will expect a valid errstr.
-     */
-    if (!errstr) {
-	/* *shrug* this is good enough, and consistent across all SBCS... */
-	param.errstr = ".";
-	param.errlen = 1;
-    }
-    param.errstr = errstr;
-    param.errlen = errlen;
-
     if (state)
 	localstate = *state;	       /* structure copy */
+    if (error)
+	*error = FALSE;
 
     while (*inlen > 0) {
 	int lenbefore = param.output - output;
+	int ret;
+
 	if (input)
-	    spec->write(spec, **input, &localstate, charset_emit, &param);
+	    ret = spec->write(spec, **input, &localstate,
+			      charset_emit, &param);
 	else
-	    spec->write(spec, -1, &localstate, charset_emit, &param);
+	    ret = spec->write(spec, -1, &localstate, charset_emit, &param);
+	if (error && !ret) {
+	    /*
+	     * We have hit a difficult character, which the user
+	     * wants to know about. Leave now.
+	     */
+	    *error = TRUE;
+	    return lenbefore;
+	}
 	if (param.stopped) {
 	    /*
 	     * The emit function has _tried_ to output some

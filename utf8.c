@@ -181,43 +181,48 @@ static void read_utf8(charset_spec const *charset, long int input_chr,
  * charset_state.
  */
 
-static void write_utf8(charset_spec const *charset, long int input_chr,
-		       charset_state *state,
-		       void (*emit)(void *ctx, long int output),
-		       void *emitctx)
+static int write_utf8(charset_spec const *charset, long int input_chr,
+		      charset_state *state,
+		      void (*emit)(void *ctx, long int output),
+		      void *emitctx)
 {
     UNUSEDARG(charset);
     UNUSEDARG(state);
 
     if (input_chr == -1)
-	return;			       /* stateless; no cleanup required */
+	return TRUE;		       /* stateless; no cleanup required */
 
     /*
      * Refuse to output any illegal code points.
      */
     if (input_chr == 0xFFFE || input_chr == 0xFFFF ||
 	(input_chr >= 0xD800 && input_chr < 0xE000)) {
-	emit(emitctx, ERROR);
+	return FALSE;
     } else if (input_chr < 0x80) {     /* one-byte character */
 	emit(emitctx, input_chr);
+	return TRUE;
     } else if (input_chr < 0x800) {    /* two-byte character */
 	emit(emitctx, 0xC0 | (0x1F & (input_chr >>  6)));
 	emit(emitctx, 0x80 | (0x3F & (input_chr      )));
+	return TRUE;
     } else if (input_chr < 0x10000) {  /* three-byte character */
 	emit(emitctx, 0xE0 | (0x0F & (input_chr >> 12)));
 	emit(emitctx, 0x80 | (0x3F & (input_chr >>  6)));
 	emit(emitctx, 0x80 | (0x3F & (input_chr      )));
+	return TRUE;
     } else if (input_chr < 0x200000) { /* four-byte character */
 	emit(emitctx, 0xF0 | (0x07 & (input_chr >> 18)));
 	emit(emitctx, 0x80 | (0x3F & (input_chr >> 12)));
 	emit(emitctx, 0x80 | (0x3F & (input_chr >>  6)));
 	emit(emitctx, 0x80 | (0x3F & (input_chr      )));
+	return TRUE;
     } else if (input_chr < 0x4000000) {/* five-byte character */
 	emit(emitctx, 0xF8 | (0x03 & (input_chr >> 24)));
 	emit(emitctx, 0x80 | (0x3F & (input_chr >> 18)));
 	emit(emitctx, 0x80 | (0x3F & (input_chr >> 12)));
 	emit(emitctx, 0x80 | (0x3F & (input_chr >>  6)));
 	emit(emitctx, 0x80 | (0x3F & (input_chr      )));
+	return TRUE;
     } else {			       /* six-byte character */
 	emit(emitctx, 0xFC | (0x01 & (input_chr >> 30)));
 	emit(emitctx, 0x80 | (0x3F & (input_chr >> 24)));
@@ -225,6 +230,7 @@ static void write_utf8(charset_spec const *charset, long int input_chr,
 	emit(emitctx, 0x80 | (0x3F & (input_chr >> 12)));
 	emit(emitctx, 0x80 | (0x3F & (input_chr >>  6)));
 	emit(emitctx, 0x80 | (0x3F & (input_chr      )));
+	return TRUE;
     }
 }
 

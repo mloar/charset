@@ -23,9 +23,9 @@ void read_sbcs(charset_spec const *charset, long int input_chr,
     emit(emitctx, sd->sbcs2ucs[input_chr]);
 }
 
-void write_sbcs(charset_spec const *charset, long int input_chr,
-		charset_state *state,
-		void (*emit)(void *ctx, long int output), void *emitctx)
+int write_sbcs(charset_spec const *charset, long int input_chr,
+	       charset_state *state,
+	       void (*emit)(void *ctx, long int output), void *emitctx)
 {
     const struct sbcs_data *sd = charset->data;
     int i, j, k, c;
@@ -33,7 +33,7 @@ void write_sbcs(charset_spec const *charset, long int input_chr,
     UNUSEDARG(state);
 
     if (input_chr == -1)
-	return;			       /* stateless; no cleanup required */
+	return TRUE;		       /* stateless; no cleanup required */
 
     /*
      * Binary-search in the ucs2sbcs table.
@@ -49,8 +49,8 @@ void write_sbcs(charset_spec const *charset, long int input_chr,
 	    i = k;
 	else {
 	    emit(emitctx, c);
-	    return;
+	    return TRUE;
 	}
     }
-    emit(emitctx, ERROR);
+    return FALSE;
 }

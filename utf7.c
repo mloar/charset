@@ -165,10 +165,10 @@ static void read_utf7(charset_spec const *charset, long int input_chr,
  * which will directly encode Set O characters and the other of
  * which will cautiously base64 them.
  */
-static void write_utf7(charset_spec const *charset, long int input_chr,
-		       charset_state *state,
-		       void (*emit)(void *ctx, long int output),
-		       void *emitctx)
+static int write_utf7(charset_spec const *charset, long int input_chr,
+		      charset_state *state,
+		      void (*emit)(void *ctx, long int output),
+		      void *emitctx)
 {
     unsigned long hws[2];
     int nhws;
@@ -185,8 +185,7 @@ static void write_utf7(charset_spec const *charset, long int input_chr,
 	/*
 	 * We can't output surrogates, or anything above 0x10FFFF.
 	 */
-	emit(emitctx, ERROR);
-	return;
+	return FALSE;
     }
 
     /*
@@ -224,7 +223,7 @@ static void write_utf7(charset_spec const *charset, long int input_chr,
 	    emit(emitctx, input_chr);
 	if (input_chr == '+')
 	    emit(emitctx, '-');	       /* +- encodes + */
-	return;
+	return TRUE;
     }
 
     /*
@@ -239,8 +238,7 @@ static void write_utf7(charset_spec const *charset, long int input_chr,
 	input_chr -= 0x10000;
 	if (input_chr >= 0x100000) {
 	    /* Anything above 0x10FFFF is outside UTF-7 range. */
-	    emit(emitctx, ERROR);
-	    return;
+	    return FALSE;
 	}
 
 	nhws = 2;
@@ -278,6 +276,7 @@ static void write_utf7(charset_spec const *charset, long int input_chr,
 	    emit(emitctx, base64_chars[out]);
 	}
     }
+    return TRUE;
 }
 
 const charset_spec charset_CS_UTF7 = {

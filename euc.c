@@ -92,9 +92,9 @@ static void read_euc(charset_spec const *charset, long int input_chr,
  * charset_state.
  */
 
-static void write_euc(charset_spec const *charset, long int input_chr,
-		      charset_state *state,
-		      void (*emit)(void *ctx, long int output), void *emitctx)
+static int write_euc(charset_spec const *charset, long int input_chr,
+		     charset_state *state,
+		     void (*emit)(void *ctx, long int output), void *emitctx)
 {
     struct euc const *euc = (struct euc *)charset->data;
     unsigned long c;
@@ -103,18 +103,17 @@ static void write_euc(charset_spec const *charset, long int input_chr,
     UNUSEDARG(state);
 
     if (input_chr == -1)
-	return;			       /* stateless; no cleanup required */
+	return TRUE;		       /* stateless; no cleanup required */
 
     /* ASCII is the easy bit, and is always the same. */
     if (input_chr < 0x80) {
 	emit(emitctx, input_chr);
-	return;
+	return TRUE;
     }
 
     c = euc->from_ucs(input_chr);
     if (!c) {
-	emit(emitctx, ERROR);
-	return;
+	return FALSE;
     }
 
     cset = c >> 28;
@@ -126,6 +125,7 @@ static void write_euc(charset_spec const *charset, long int input_chr,
 
     while (len--)
 	emit(emitctx, (c >> (8*len)) & 0xFF);
+    return TRUE;
 }
 
 /*

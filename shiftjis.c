@@ -77,24 +77,28 @@ static void read_sjis(charset_spec const *charset, long int input_chr,
  * charset_state.
  */
 
-static void write_sjis(charset_spec const *charset, long int input_chr,
-		       charset_state *state,
-		       void (*emit)(void *ctx, long int output), void *emitctx)
+static int write_sjis(charset_spec const *charset, long int input_chr,
+		      charset_state *state,
+		      void (*emit)(void *ctx, long int output), void *emitctx)
 {
     UNUSEDARG(charset);
     UNUSEDARG(state);
 
     if (input_chr == -1)
-	return;			       /* stateless; no cleanup required */
+	return TRUE;		       /* stateless; no cleanup required */
 
     if (input_chr < 0x80 && input_chr != 0x5C && input_chr != 0x7E) {
 	emit(emitctx, input_chr);
+	return TRUE;
     } else if (input_chr == 0xA5) {
 	emit(emitctx, 0x5C);
+	return TRUE;
     } else if (input_chr == 0x203E) {
 	emit(emitctx, 0x7E);
+	return TRUE;
     } else if (input_chr >= 0xFF61 && input_chr <= 0xFF9F) {
 	emit(emitctx, input_chr - (0xFF61 - 0xA1));
+	return TRUE;
     } else {
 	int r, c;
 	if (unicode_to_jisx0208(input_chr, &r, &c)) {
@@ -106,8 +110,9 @@ static void write_sjis(charset_spec const *charset, long int input_chr,
 	    if (c >= 0x7F) c++;
 	    emit(emitctx, r);
 	    emit(emitctx, c);
+	    return TRUE;
 	} else {
-	    emit(emitctx, ERROR);
+	    return FALSE;
 	}
     }
 }

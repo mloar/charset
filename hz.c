@@ -90,9 +90,9 @@ static void read_hz(charset_spec const *charset, long int input_chr,
     }
 }
 
-static void write_hz(charset_spec const *charset, long int input_chr,
-		     charset_state *state,
-		     void (*emit)(void *ctx, long int output), void *emitctx)
+static int write_hz(charset_spec const *charset, long int input_chr,
+		    charset_state *state,
+		    void (*emit)(void *ctx, long int output), void *emitctx)
 {
     int desired_state, r, c;
 
@@ -107,8 +107,7 @@ static void write_hz(charset_spec const *charset, long int input_chr,
     } else if (unicode_to_gb2312(input_chr, &r, &c)) {
 	desired_state = 1;
     } else {
-	emit(emitctx, ERROR);
-	return;
+	return FALSE;
     }
 
     if (state->s0 != desired_state) {
@@ -118,7 +117,7 @@ static void write_hz(charset_spec const *charset, long int input_chr,
     }
 
     if (input_chr < 0)
-	return;			       /* special case: just reset state */
+	return TRUE;		       /* special case: just reset state */
 
     if (state->s0) {
 	/*
@@ -129,6 +128,7 @@ static void write_hz(charset_spec const *charset, long int input_chr,
     } else {
 	emit(emitctx, c);
     }
+    return TRUE;
 }
 
 const charset_spec charset_CS_HZ = {

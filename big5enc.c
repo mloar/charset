@@ -57,25 +57,27 @@ static void read_big5(charset_spec const *charset, long int input_chr,
  * charset_state.
  */
 
-static void write_big5(charset_spec const *charset, long int input_chr,
-		       charset_state *state,
-		       void (*emit)(void *ctx, long int output), void *emitctx)
+static int write_big5(charset_spec const *charset, long int input_chr,
+		      charset_state *state,
+		      void (*emit)(void *ctx, long int output), void *emitctx)
 {
     UNUSEDARG(charset);
     UNUSEDARG(state);
 
     if (input_chr == -1)
-	return;			       /* stateless; no cleanup required */
+	return TRUE;		       /* stateless; no cleanup required */
 
     if (input_chr < 0x80) {
 	emit(emitctx, input_chr);
+	return TRUE;
     } else {
 	int r, c;
 	if (unicode_to_big5(input_chr, &r, &c)) {
 	    emit(emitctx, r + 0xA1);
 	    emit(emitctx, c + 0x40);
+	    return TRUE;
 	} else {
-	    emit(emitctx, ERROR);
+	    return FALSE;
 	}
     }
 }

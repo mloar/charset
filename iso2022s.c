@@ -274,10 +274,10 @@ static void read_iso2022s(charset_spec const *charset, long int input_chr,
     }
 }
 
-static void write_iso2022s(charset_spec const *charset, long int input_chr,
-			   charset_state *state,
-			   void (*emit)(void *ctx, long int output),
-			   void *emitctx)
+static int write_iso2022s(charset_spec const *charset, long int input_chr,
+			  charset_state *state,
+			  void (*emit)(void *ctx, long int output),
+			  void *emitctx)
 {
     struct iso2022 const *iso = (struct iso2022 *)charset->data;
     int subcharset, len, i, j, cont;
@@ -289,6 +289,13 @@ static void write_iso2022s(charset_spec const *charset, long int input_chr,
      * current container, and current subcharset selected in each
      * container.
      */
+
+    /*
+     * Analyse the character and find out what subcharset it needs
+     * to go in.
+     */
+    if (input_chr >= 0 && !iso->from_ucs(input_chr, &subcharset, &bytes))
+	return FALSE;
 
     if (!(state->s1 & 0x80000000)) {
 	state->s1 = iso->s1;
@@ -315,16 +322,7 @@ static void write_iso2022s(charset_spec const *charset, long int input_chr,
 	    }
 	}
 
-	return;
-    }
-
-    /*
-     * Analyse the character and find out what subcharset it needs
-     * to go in.
-     */
-    if (!iso->from_ucs(input_chr, &subcharset, &bytes)) {
-	emit(emitctx, ERROR);
-	return;
+	return TRUE;
     }
 
     /*
@@ -377,6 +375,7 @@ static void write_iso2022s(charset_spec const *charset, long int input_chr,
     while (len--)
 	emit(emitctx, (bytes >> (8*len)) & 0xFF);
 
+    return TRUE;
 }
 
 /*
