@@ -89,7 +89,20 @@ typedef struct {
     unsigned long s0, s1;
 } charset_state;
 
+/*
+ * This macro is used to initialise a charset_state structure:
+ * 
+ *   charset_state mystate = CHARSET_INIT_STATE;
+ */
 #define CHARSET_INIT_STATE { 0L, 0L }  /* a suitable initialiser */
+
+/*
+ * This external variable contains the same data, but is provided
+ * for easy structure-copy assignment:
+ * 
+ *   mystate = charset_init_state;
+ */
+extern const charset_state charset_init_state;
 
 /*
  * Routine to convert a MB/SB character set to Unicode.
