@@ -4,6 +4,7 @@
 # source form sbcs.dat.
 
 $infile = "sbcs.dat";
+$infile = shift @ARGV if defined $ARGV[0];
 $outfile = "sbcsdat.c";
 
 open FOO, $infile;
