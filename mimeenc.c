@@ -13,7 +13,7 @@ static const struct {
     int charset;
 } mimeencs[] = {
     /*
-     * These names are taken from
+     * Most of these names are taken from
      * 
      *   http://www.iana.org/assignments/character-sets
      * 
@@ -21,8 +21,13 @@ static const struct {
      * (such as the variety of aliases for ISO-8859-1), the first
      * is considered canonical and will be returned when
      * translating the id to a string.
+     * 
+     * I also list here a few names which aren't in the above web
+     * page, but which I've seen in the wild in real mail. These
+     * are marked with a comment saying WILD.
      */
     { "ISO-8859-1", CS_ISO8859_1 },
+    { "ISO8859-1", CS_ISO8859_1 },     /* WILD */
     { "iso-ir-100", CS_ISO8859_1 },
     { "ISO_8859-1", CS_ISO8859_1 },
     { "ISO_8859-1:1987", CS_ISO8859_1 },
@@ -33,6 +38,7 @@ static const struct {
     { "csISOLatin1", CS_ISO8859_1 },
 
     { "ISO-8859-2", CS_ISO8859_2 },
+    { "ISO8859-2", CS_ISO8859_2 },     /* WILD */
     { "ISO_8859-2:1987", CS_ISO8859_2 },
     { "iso-ir-101", CS_ISO8859_2 },
     { "ISO_8859-2", CS_ISO8859_2 },
@@ -41,6 +47,7 @@ static const struct {
     { "csISOLatin2", CS_ISO8859_2 },
 
     { "ISO-8859-3", CS_ISO8859_3 },
+    { "ISO8859-3", CS_ISO8859_3 },     /* WILD */
     { "ISO_8859-3:1988", CS_ISO8859_3 },
     { "iso-ir-109", CS_ISO8859_3 },
     { "ISO_8859-3", CS_ISO8859_3 },
@@ -49,6 +56,7 @@ static const struct {
     { "csISOLatin3", CS_ISO8859_3 },
 
     { "ISO-8859-4", CS_ISO8859_4 },
+    { "ISO8859-4", CS_ISO8859_4 },     /* WILD */
     { "ISO_8859-4:1988", CS_ISO8859_4 },
     { "iso-ir-110", CS_ISO8859_4 },
     { "ISO_8859-4", CS_ISO8859_4 },
@@ -57,6 +65,7 @@ static const struct {
     { "csISOLatin4", CS_ISO8859_4 },
 
     { "ISO-8859-5", CS_ISO8859_5 },
+    { "ISO8859-5", CS_ISO8859_5 },     /* WILD */
     { "ISO_8859-5:1988", CS_ISO8859_5 },
     { "iso-ir-144", CS_ISO8859_5 },
     { "ISO_8859-5", CS_ISO8859_5 },
@@ -64,6 +73,7 @@ static const struct {
     { "csISOLatinCyrillic", CS_ISO8859_5 },
 
     { "ISO-8859-6", CS_ISO8859_6 },
+    { "ISO8859-6", CS_ISO8859_6 },     /* WILD */
     { "ISO_8859-6:1987", CS_ISO8859_6 },
     { "iso-ir-127", CS_ISO8859_6 },
     { "ISO_8859-6", CS_ISO8859_6 },
@@ -73,6 +83,7 @@ static const struct {
     { "csISOLatinArabic", CS_ISO8859_6 },
 
     { "ISO-8859-7", CS_ISO8859_7 },
+    { "ISO8859-7", CS_ISO8859_7 },     /* WILD */
     { "ISO_8859-7:1987", CS_ISO8859_7 },
     { "iso-ir-126", CS_ISO8859_7 },
     { "ISO_8859-7", CS_ISO8859_7 },
@@ -83,6 +94,7 @@ static const struct {
     { "csISOLatinGreek", CS_ISO8859_7 },
 
     { "ISO-8859-8", CS_ISO8859_8 },
+    { "ISO8859-8", CS_ISO8859_8 },     /* WILD */
     { "ISO_8859-8:1988", CS_ISO8859_8 },
     { "iso-ir-138", CS_ISO8859_8 },
     { "ISO_8859-8", CS_ISO8859_8 },
@@ -90,6 +102,7 @@ static const struct {
     { "csISOLatinHebrew", CS_ISO8859_8 },
 
     { "ISO-8859-9", CS_ISO8859_9 },
+    { "ISO8859-9", CS_ISO8859_9 },     /* WILD */
     { "ISO_8859-9:1989", CS_ISO8859_9 },
     { "iso-ir-148", CS_ISO8859_9 },
     { "ISO_8859-9", CS_ISO8859_9 },
@@ -98,6 +111,7 @@ static const struct {
     { "csISOLatin5", CS_ISO8859_9 },
 
     { "ISO-8859-10", CS_ISO8859_10 },
+    { "ISO8859-10", CS_ISO8859_10 },   /* WILD */
     { "iso-ir-157", CS_ISO8859_10 },
     { "l6", CS_ISO8859_10 },
     { "ISO_8859-10:1992", CS_ISO8859_10 },
@@ -105,8 +119,10 @@ static const struct {
     { "latin6", CS_ISO8859_10 },
 
     { "ISO-8859-13", CS_ISO8859_13 },
+    { "ISO8859-13", CS_ISO8859_13 },   /* WILD */
 
     { "ISO-8859-14", CS_ISO8859_14 },
+    { "ISO8859-14", CS_ISO8859_14 },   /* WILD */
     { "iso-ir-199", CS_ISO8859_14 },
     { "ISO_8859-14:1998", CS_ISO8859_14 },
     { "ISO_8859-14", CS_ISO8859_14 },
@@ -115,10 +131,12 @@ static const struct {
     { "l8", CS_ISO8859_14 },
 
     { "ISO-8859-15", CS_ISO8859_15 },
+    { "ISO8859-15", CS_ISO8859_15 },   /* WILD */
     { "ISO_8859-15", CS_ISO8859_15 },
     { "Latin-9", CS_ISO8859_15 },
 
     { "ISO-8859-16", CS_ISO8859_16 },
+    { "ISO8859-16", CS_ISO8859_16 },   /* WILD */
     { "iso-ir-226", CS_ISO8859_16 },
     { "ISO_8859-16", CS_ISO8859_16 },
     { "ISO_8859-16:2001", CS_ISO8859_16 },
@@ -136,22 +154,31 @@ static const struct {
     { "csPC850Multilingual", CS_CP850 },
 
     { "windows-1250", CS_CP1250 },
+    { "win-1250", CS_CP1250 },	       /* WILD */
 
     { "windows-1251", CS_CP1251 },
+    { "win-1251", CS_CP1251 },	       /* WILD */
 
     { "windows-1252", CS_CP1252 },
+    { "win-1252", CS_CP1252 },	       /* WILD */
 
     { "windows-1253", CS_CP1253 },
+    { "win-1253", CS_CP1253 },	       /* WILD */
 
     { "windows-1254", CS_CP1254 },
+    { "win-1254", CS_CP1254 },	       /* WILD */
 
     { "windows-1255", CS_CP1255 },
+    { "win-1255", CS_CP1255 },	       /* WILD */
 
     { "windows-1256", CS_CP1256 },
+    { "win-1256", CS_CP1256 },	       /* WILD */
 
     { "windows-1257", CS_CP1257 },
+    { "win-1257", CS_CP1257 },	       /* WILD */
 
     { "windows-1258", CS_CP1258 },
+    { "win-1258", CS_CP1258 },	       /* WILD */
 
     { "KOI8-R", CS_KOI8_R },
     { "csKOI8R", CS_KOI8_R },
@@ -203,6 +230,10 @@ static const struct {
 
     { "Big5", CS_BIG5 },
     { "csBig5", CS_BIG5 },
+    /* The following two names are not listed on the above web page, but
+     * I've seen them in the wild in real e-mail. */
+    { "Big-5", CS_BIG5 },
+    { "ChineseBig5", CS_BIG5 },
 
     { "Shift_JIS", CS_SHIFT_JIS },
     { "MS_Kanji", CS_SHIFT_JIS },
@@ -215,6 +246,22 @@ static const struct {
     { "UTF-16LE", CS_UTF16LE },
 
     { "UTF-16", CS_UTF16 },
+
+    /*
+     * This bit is fiddly and possibly technically incorrect; but
+     * rumour has it that the KSC 5601 encoding is a subset of
+     * Microsoft CP949, and that MS products tend to announce CP949
+     * as KSC 5601 in much the same way they seem willing to
+     * announce CP1252 as its subset ISO 8859-1. So I cheat
+     * shamelessly here by letting KSC 5601 map to CP949.
+     */
+    { "KS_C_5601-1987", CS_CP949 },
+    { "iso-ir-149", CS_CP949 },
+    { "KS_C_5601-1989", CS_CP949 },
+    { "KSC_5601", CS_CP949 },
+    { "korean", CS_CP949 },
+    { "csKSC56011987", CS_CP949 },
+    { "KSC5601", CS_CP949 },	       /* WILD */
 
 #if 0
     { "ISO-2022-JP-2", CS_ISO2022_JP_2 },

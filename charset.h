@@ -80,6 +80,7 @@ typedef enum {
     CS_BIG5,
     CS_SHIFT_JIS,
     CS_HZ,
+    CS_CP949,
 } charset_t;
 
 typedef struct {

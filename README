@@ -1,0 +1,38 @@
+This subdirectory contains a general character-set conversion
+library, used in Timber, and available for use in other software if
+it should happen to be useful.
+
+I intend to use this same library in other programs at some future
+date. (A cut-down version of it is already in use in some ports of
+PuTTY.) It is therefore a _strong_ design goal that this library
+should remain perfectly general, and not tied to particulars of
+Timber. It must not reference any code outside its own subdirectory;
+it should not have Timber-specific helper routines added to it
+unless they can be documented in a general manner which might make
+them useful in other circumstances as well.
+
+There are some multibyte character encodings which this library does
+not currently support. Those that I know of are:
+
+ - Johab. There is no reason why we _shouldn't_ support this, but it
+   wasn't immediately necessary at the time I did the initial
+   coding. If anyone needs it, it shouldn't be too hard.
+
+ - ISO-2022-JP-1 (RFC 2237), and ISO-2022-JP-2 (RFC 1554). These
+   should be even easier if required - we already have the ISO 2022
+   machinery in place, and support all the underlying character
+   sets.
+
+ - ISO-2022-CN and ISO-2022-CN-EXT (RFC 1922), and EUC-TW. These
+   encodings depend on the CNS 11643-1992 character set, and I don't
+   know where to find mapping tables between that and Unicode.
+   (There is a CNS11643.TXT on unicode.org, but it's CNS 11643-1986,
+   which is very different. The 1986 revision contains planes
+   numbered 1, 2 and 14, whereas the 1992 one contains planes 1-7.)
+   GNU iconv appears to have mapping tables for the 1992 revision,
+   but it's under GPL so I can't lift them from there. If anyone
+   needs these encodings supporting, they will have to supply a
+   source of mapping tables.
+
+ - Big Five Plus, and the Hong Kong extension to Big5. I don't have
+   mapping tables for either of these either.

@@ -23,4 +23,5 @@
 #include "big5enc.c"
 #include "shiftjis.c"
 #include "hz.c"
+#include "cp949.c"
 #undef ENUM_CHARSETS
