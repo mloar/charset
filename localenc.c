@@ -67,6 +67,10 @@ static const struct {
     { "KOI8-R", CS_KOI8_R, 1 },
     { "KOI8-U", CS_KOI8_U, 1 },
     { "KOI8-RU", CS_KOI8_RU, 1 },
+    { "JIS X 0201", CS_JISX0201, 1 },
+    { "JIS-X-0201", CS_JISX0201, 1 },
+    { "JIS_X_0201", CS_JISX0201, 1 },
+    { "JISX0201", CS_JISX0201, 1 },
     { "Mac Roman", CS_MAC_ROMAN, 1 },
     { "Mac Turkish", CS_MAC_TURKISH, 1 },
     { "Mac Croatian", CS_MAC_CROATIAN, 1 },
@@ -106,6 +110,11 @@ static const struct {
     { "UTF-16", CS_UTF16, 1 },
     { "CP949", CS_CP949, 1 },
     { "PDFDocEncoding", CS_PDF, 1 },
+    { "COMPOUND_TEXT", CS_CTEXT, 1 },
+    { "COMPOUND-TEXT", CS_CTEXT, 1 },
+    { "COMPOUND TEXT", CS_CTEXT, 1 },
+    { "COMPOUNDTEXT", CS_CTEXT, 1 },
+    { "CTEXT", CS_CTEXT, 1 },
 };
 
 const char *charset_to_localenc(int charset)

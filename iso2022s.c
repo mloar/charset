@@ -14,6 +14,7 @@
 
 #include "charset.h"
 #include "internal.h"
+#include "sbcsdat.h"
 
 #define SO (0x0E)
 #define SI (0x0F)
@@ -26,9 +27,14 @@ struct iso2022_escape {
     /*
      * For output, these variables help us figure out which escape
      * sequences we need to get where we want to be.
+     * 
+     * `container' should be in the range 0-3, but can also be ORed
+     * with the bit flag RO to indicate that this is not a
+     * preferred container to use for this charset during output.
      */
     int container, subcharset;
 };
+#define RO 0x80
 
 struct iso2022 {
     /*
@@ -74,6 +80,11 @@ struct iso2022 {
     char const *initial_sequence;
 
     /*
+     * Is this an 8-bit ISO 2022 subset?
+     */
+    int eightbit;
+
+    /*
      * Function calls to do the actual translation.
      */
     long int (*to_ucs)(int subcharset, unsigned long bytes);
@@ -115,6 +126,11 @@ static void read_iso2022s(charset_spec const *charset, long int input_chr,
      * 	     either 2 or 3.
      * 	   + Hence: 0 is SI, 1 is SO, 4 is SS2-from-SI, 5 is
      * 	     SS2-from-SO, 6 is SS3-from-SI, 7 is SS3-from-SO.
+     * 	   + For added fun: in an _8-bit_ ISO 2022 subset, we have
+     * 	     the further special value 2, which means that we're
+     * 	     theoretically in SI but the current character being
+     * 	     accumulated is composed of 8-bit characters and will
+     * 	     therefore be interpreted as if in SO.
      * 
      * 	- The next nibble of s1 (27:24) indicates how many bytes
      * 	  have been accumulated in the current character.
@@ -214,9 +230,12 @@ static void read_iso2022s(charset_spec const *charset, long int input_chr,
     /*
      * If this isn't an escape sequence, it must be part of a
      * character. One possibility is that it's a control character
-     * (outside the space 21-7E), in which case we output it verbatim.
+     * (00-20 or 7F-9F; also in non-8-bit ISO 2022 subsets I'm
+     * going to treat all top-half characters as controls), in
+     * which case we output it verbatim.
      */
-    if (input_chr < 0x21 || input_chr > 0x7E) {
+    if (input_chr < 0x21 ||
+	(input_chr > 0x7E && (!iso->eightbit || input_chr < 0xA0))) {
 	/*
 	 * We might be in mid-multibyte-character. If so, clear the
 	 * character state and emit an error token for the
@@ -245,8 +264,45 @@ static void read_iso2022s(charset_spec const *charset, long int input_chr,
 	unsigned long chr;
 	int chrlen, cont, subcharset, bytes;
 
+	/*
+	 * Verify that we've seen the right kind of character for
+	 * what we're currently doing. This only matters in 8-bit
+	 * subsets.
+	 */
+	if (iso->eightbit) {
+	    cont = (state->s1 >> 28) & 7;
+	    /*
+	     * If cont==0, we're entitled to see either GL or GR
+	     * characters. If cont==2, we expect only GR; otherwise
+	     * we expect only GL.
+	     * 
+	     * If we see a GR character while cont==0, we set
+	     * cont=2 immediately.
+	     */
+	    if ((cont == 2 && !(input_chr & 0x80)) ||
+		(cont != 0 && cont != 2 && (input_chr & 0x80))) {
+		/*
+		 * Clear the previous character; it was prematurely
+		 * terminated by this error.
+		 */
+		state->s1 &= ~0x0F000000;
+		state->s0 &= 0xFF000000;
+		emit(emitctx, ERROR);
+		/*
+		 * If we were in the SS2 or SS3 container, we
+		 * automatically exit it.
+		 */
+		if (state->s1 & 0x60000000)
+		    state->s1 &= 0x9FFFFFFF;
+	    }
+
+	    if (cont == 0 && (input_chr & 0x80)) {
+		state->s1 |= 0x20000000;
+	    }
+	}
+
 	/* The current character and its length. */
-	chr = ((state->s0 & 0x00FFFFFF) << 8) | input_chr;
+	chr = ((state->s0 & 0x00FFFFFF) << 8) | (input_chr & 0x7F);
 	chrlen = ((state->s1 >> 24) & 0xF) + 1;
 	/* The current sub-charset. */
 	cont = (state->s1 >> 28) & 7;
@@ -280,7 +336,7 @@ static int write_iso2022s(charset_spec const *charset, long int input_chr,
 			  void *emitctx)
 {
     struct iso2022 const *iso = (struct iso2022 *)charset->data;
-    int subcharset, len, i, j, cont;
+    int subcharset, len, i, j, cont, topbit = 0;
     unsigned long bytes;
 
     /*
@@ -333,7 +389,8 @@ static int write_iso2022s(charset_spec const *charset, long int input_chr,
      * necessary, and then output the given bytes.
      */
     for (i = 0; i < iso->nescapes; i++)
-	if (iso->escapes[i].subcharset == subcharset)
+	if (iso->escapes[i].subcharset == subcharset &&
+	    !(iso->escapes[i].container & RO))
 	    break;
     assert(i < iso->nescapes);
 
@@ -343,7 +400,7 @@ static int write_iso2022s(charset_spec const *charset, long int input_chr,
      * already _be_ selected in that container! Check before we go
      * to the effort of emitting the sequence.
      */
-    cont = iso->escapes[i].container;
+    cont = iso->escapes[i].container &~ RO;
     if (((state->s1 >> (6*cont)) & 0x3F) != (unsigned)subcharset) {
 	for (j = 0; iso->escapes[i].sequence[j]; j++)
 	    emit(emitctx, iso->escapes[i].sequence[j]);
@@ -360,9 +417,17 @@ static int write_iso2022s(charset_spec const *charset, long int input_chr,
 	emit(emitctx, ESC);
 	emit(emitctx, 'L' + cont);     /* comes out to 'N' or 'O' */
     } else {
-	/* Emit SI or SO, but only if the current container isn't already
-	 * the right one. */
-	if (((state->s1 >> 28) & 7) != (unsigned)cont) {
+	/*
+	 * Emit SI or SO, but only if the current container isn't already
+	 * the right one.
+	 * 
+	 * Also, in an 8-bit subset, we need not do this; we'll
+	 * just use 8-bit characters to output SO-container
+	 * characters.
+	 */
+	if (iso->eightbit && cont == 1 && ((state->s1 >> 28) & 7) == 0) {
+	    topbit = 0x80;
+	} else if (((state->s1 >> 28) & 7) != (unsigned)cont) {
 	    emit(emitctx, cont ? SO : SI);
 	    state->s1 = (state->s1 & 0x8FFFFFFF) | (cont << 28);
 	}
@@ -374,7 +439,7 @@ static int write_iso2022s(charset_spec const *charset, long int input_chr,
      */
     len = iso->nbytes[subcharset];
     while (len--)
-	emit(emitctx, (bytes >> (8*len)) & 0xFF);
+	emit(emitctx, ((bytes >> (8*len)) & 0xFF) | topbit);
 
     return TRUE;
 }
@@ -425,7 +490,8 @@ static struct iso2022_escape iso2022jp_escapes[] = {
 };
 static struct iso2022 iso2022jp = {
     iso2022jp_escapes, lenof(iso2022jp_escapes),
-    "\1\1\2", "\3", 0x80000000, NULL, iso2022jp_to_ucs, iso2022jp_from_ucs
+    "\1\1\2", "\3", 0x80000000, NULL, FALSE,
+    iso2022jp_to_ucs, iso2022jp_from_ucs
 };
 const charset_spec charset_CS_ISO2022_JP = {
     CS_ISO2022_JP, read_iso2022s, write_iso2022s, &iso2022jp
@@ -466,15 +532,192 @@ static struct iso2022_escape iso2022kr_escapes[] = {
 };
 static struct iso2022 iso2022kr = {
     iso2022kr_escapes, lenof(iso2022kr_escapes),
-    "\1\2", "\2", 0x80000040, "\033$)C", iso2022kr_to_ucs, iso2022kr_from_ucs
+    "\1\2", "\2", 0x80000040, "\033$)C", FALSE,
+    iso2022kr_to_ucs, iso2022kr_from_ucs
 };
 const charset_spec charset_CS_ISO2022_KR = {
     CS_ISO2022_KR, read_iso2022s, write_iso2022s, &iso2022kr
+};
+
+/*
+ * The COMPOUND_TEXT encoding used in X selections. Defined by the
+ * X consortium.
+ * 
+ * This encoding has quite a few sub-charsets. The order I assign
+ * to them here is given in an enum.
+ */
+enum {
+    /* This must match the bytes-per-character string given below. */
+    CTEXT_ASCII,
+    CTEXT_JISX0201_LEFT,
+    CTEXT_JISX0201_RIGHT,
+    CTEXT_ISO8859_1,
+    CTEXT_ISO8859_2,
+    CTEXT_ISO8859_3,
+    CTEXT_ISO8859_4,
+    CTEXT_ISO8859_5,
+    CTEXT_ISO8859_6,
+    CTEXT_ISO8859_7,
+    CTEXT_ISO8859_8,
+    CTEXT_ISO8859_9,
+    CTEXT_GB2312,
+    CTEXT_KSC5601,
+    CTEXT_JISX0208
+};
+static long int ctext_to_ucs(int subcharset, unsigned long bytes)
+{
+    switch (subcharset) {
+      case CTEXT_ASCII: return bytes;	       /* one-byte ASCII */
+      case CTEXT_JISX0201_LEFT:        /* ASCII with yen and overline */
+	return sbcs_to_unicode(&sbcsdata_CS_JISX0201, bytes & 0x7F);
+      case CTEXT_JISX0201_RIGHT:       /* JIS X 0201 half-width katakana */
+	return sbcs_to_unicode(&sbcsdata_CS_JISX0201, (bytes & 0x7F) | 0x80);
+      case CTEXT_ISO8859_1:
+	return sbcs_to_unicode(&sbcsdata_CS_ISO8859_1, (bytes & 0x7F) | 0x80);
+      case CTEXT_ISO8859_2:
+	return sbcs_to_unicode(&sbcsdata_CS_ISO8859_2, (bytes & 0x7F) | 0x80);
+      case CTEXT_ISO8859_3:
+	return sbcs_to_unicode(&sbcsdata_CS_ISO8859_3, (bytes & 0x7F) | 0x80);
+      case CTEXT_ISO8859_4:
+	return sbcs_to_unicode(&sbcsdata_CS_ISO8859_4, (bytes & 0x7F) | 0x80);
+      case CTEXT_ISO8859_5:
+	return sbcs_to_unicode(&sbcsdata_CS_ISO8859_5, (bytes & 0x7F) | 0x80);
+      case CTEXT_ISO8859_6:
+	return sbcs_to_unicode(&sbcsdata_CS_ISO8859_6, (bytes & 0x7F) | 0x80);
+      case CTEXT_ISO8859_7:
+	return sbcs_to_unicode(&sbcsdata_CS_ISO8859_7, (bytes & 0x7F) | 0x80);
+      case CTEXT_ISO8859_8:
+	return sbcs_to_unicode(&sbcsdata_CS_ISO8859_8, (bytes & 0x7F) | 0x80);
+      case CTEXT_ISO8859_9:
+	return sbcs_to_unicode(&sbcsdata_CS_ISO8859_9, (bytes & 0x7F) | 0x80);
+      case CTEXT_GB2312:
+	return gb2312_to_unicode(((bytes >> 8) & 0xFF) - 0x21,
+				 ((bytes     ) & 0xFF) - 0x21);
+      case CTEXT_KSC5601:
+	return ksx1001_to_unicode(((bytes >> 8) & 0xFF) - 0x21,
+				  ((bytes     ) & 0xFF) - 0x21);
+      case CTEXT_JISX0208:
+	return jisx0208_to_unicode(((bytes >> 8) & 0xFF) - 0x21,
+				   ((bytes     ) & 0xFF) - 0x21);
+      default: return ERROR;
+    }
+}
+static int ctext_from_ucs(long int ucs, int *subcharset, unsigned long *bytes)
+{
+    int r, c;
+    if (ucs < 0x80) {
+	*subcharset = CTEXT_ASCII;
+	*bytes = ucs;
+	return 1;
+    } else if ((c = sbcs_from_unicode(&sbcsdata_CS_ISO8859_1, ucs)) != ERROR) {
+	*subcharset = CTEXT_ISO8859_1;
+	*bytes = c - 0x80;
+	return 1;
+    } else if ((c = sbcs_from_unicode(&sbcsdata_CS_ISO8859_2, ucs)) != ERROR) {
+	*subcharset = CTEXT_ISO8859_2;
+	*bytes = c - 0x80;
+	return 1;
+    } else if ((c = sbcs_from_unicode(&sbcsdata_CS_ISO8859_3, ucs)) != ERROR) {
+	*subcharset = CTEXT_ISO8859_3;
+	*bytes = c - 0x80;
+	return 1;
+    } else if ((c = sbcs_from_unicode(&sbcsdata_CS_ISO8859_4, ucs)) != ERROR) {
+	*subcharset = CTEXT_ISO8859_4;
+	*bytes = c - 0x80;
+	return 1;
+    } else if ((c = sbcs_from_unicode(&sbcsdata_CS_ISO8859_5, ucs)) != ERROR) {
+	*subcharset = CTEXT_ISO8859_5;
+	*bytes = c - 0x80;
+	return 1;
+    } else if ((c = sbcs_from_unicode(&sbcsdata_CS_ISO8859_6, ucs)) != ERROR) {
+	*subcharset = CTEXT_ISO8859_6;
+	*bytes = c - 0x80;
+	return 1;
+    } else if ((c = sbcs_from_unicode(&sbcsdata_CS_ISO8859_7, ucs)) != ERROR) {
+	*subcharset = CTEXT_ISO8859_7;
+	*bytes = c - 0x80;
+	return 1;
+    } else if ((c = sbcs_from_unicode(&sbcsdata_CS_ISO8859_8, ucs)) != ERROR) {
+	*subcharset = CTEXT_ISO8859_8;
+	*bytes = c - 0x80;
+	return 1;
+    } else if ((c = sbcs_from_unicode(&sbcsdata_CS_ISO8859_9, ucs)) != ERROR) {
+	*subcharset = CTEXT_ISO8859_9;
+	*bytes = c - 0x80;
+	return 1;
+    } else if ((c = sbcs_from_unicode(&sbcsdata_CS_JISX0201, ucs)) != ERROR) {
+	if (c < 0x80) {
+	    *subcharset = CTEXT_JISX0201_LEFT;
+	} else {
+	    *subcharset = CTEXT_JISX0201_RIGHT;
+	    c -= 0x80;
+	}
+	*bytes = c;
+	return 1;
+    } else if (unicode_to_gb2312(ucs, &r, &c)) {
+	*subcharset = CTEXT_GB2312;
+	*bytes = ((r+0x21) << 8) | (c+0x21);
+	return 1;
+    } else if (unicode_to_ksx1001(ucs, &r, &c)) {
+	*subcharset = CTEXT_KSC5601;
+	*bytes = ((r+0x21) << 8) | (c+0x21);
+	return 1;
+    } else if (unicode_to_jisx0208(ucs, &r, &c)) {
+	*subcharset = CTEXT_JISX0208;
+	*bytes = ((r+0x21) << 8) | (c+0x21);
+	return 1;
+    } else {
+	return 0;
+    }
+}
+#define SEQ(str,cont,cs) \
+    {str,~(63<<(6*((cont&~RO)))),(cs)<<(6*((cont&~RO))),(cont),(cs)}
+/*
+ * Compound text defines restrictions on which container can take
+ * which character sets. Things labelled `left half of' can only go
+ * in GL; things labelled `right half of' can only go in GR; and 96
+ * or 96^n character sets only _fit_ in GR. Thus:
+ *  - ASCII can only go in GL since it is the left half of 8859-*.
+ *  - All the 8859 sets can only go in GR.
+ *  - JISX0201 left is GL only; JISX0201 right is GR only.
+ *  - The three multibyte sets (GB2312, JISX0208, KSC5601) can go
+ *    in either; we prefer GR where possible since this leads to a
+ *    more compact EUC-like encoding.
+ */
+static struct iso2022_escape ctext_escapes[] = {
+    SEQ("\033$(A", 0|RO, CTEXT_GB2312),
+    SEQ("\033$(B", 0|RO, CTEXT_JISX0208),
+    SEQ("\033$(C", 0|RO, CTEXT_KSC5601),
+    SEQ("\033$)A", 1, CTEXT_GB2312),
+    SEQ("\033$)B", 1, CTEXT_JISX0208),
+    SEQ("\033$)C", 1, CTEXT_KSC5601),
+    SEQ("\033(B", 0, CTEXT_ASCII),
+    SEQ("\033(J", 0, CTEXT_JISX0201_LEFT),
+    SEQ("\033-A", 1, CTEXT_ISO8859_1),
+    SEQ("\033-B", 1, CTEXT_ISO8859_2),
+    SEQ("\033-C", 1, CTEXT_ISO8859_3),
+    SEQ("\033-D", 1, CTEXT_ISO8859_4),
+    SEQ("\033-F", 1, CTEXT_ISO8859_7),
+    SEQ("\033-G", 1, CTEXT_ISO8859_6),
+    SEQ("\033-H", 1, CTEXT_ISO8859_8),
+    SEQ("\033)I", 1, CTEXT_JISX0201_RIGHT),
+    SEQ("\033-L", 1, CTEXT_ISO8859_5),
+    SEQ("\033-M", 1, CTEXT_ISO8859_9),
+};
+static struct iso2022 ctext = {
+    ctext_escapes, lenof(ctext_escapes),
+    "\1\1\1\1\1\1\1\1\1\1\1\1\2\2\2",  /* must match the enum above */
+    "", 0x80000000 | (CTEXT_ASCII<<0) | (CTEXT_ASCII<<6), "", TRUE,
+    ctext_to_ucs, ctext_from_ucs
+};
+const charset_spec charset_CS_CTEXT = {
+    CS_CTEXT, read_iso2022s, write_iso2022s, &ctext
 };
 
 #else /* ENUM_CHARSETS */
 
 ENUM_CHARSET(CS_ISO2022_JP)
 ENUM_CHARSET(CS_ISO2022_KR)
+ENUM_CHARSET(CS_CTEXT)
 
 #endif /* ENUM_CHARSETS */

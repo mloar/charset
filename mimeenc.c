@@ -201,6 +201,10 @@ static const struct {
 
     { "KOI8-RU", CS_KOI8_RU },	       /* WILD */
 
+    { "JIS_X0201", CS_JISX0201 },
+    { "X0201", CS_JISX0201 },
+    { "csHalfWidthKatakana", CS_JISX0201 },
+
     { "macintosh", CS_MAC_ROMAN_OLD },
     { "mac", CS_MAC_ROMAN_OLD },
     { "csMacintosh", CS_MAC_ROMAN_OLD },

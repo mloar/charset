@@ -37,11 +37,19 @@
 
 $(LIBCHARSET_GENPFX)all: \
 	$(LIBCHARSET_OBJDIR)libcharset.a \
-	$(LIBCHARSET_OBJDIR)convcs
+	$(LIBCHARSET_OBJDIR)convcs \
+	$(LIBCHARSET_OBJDIR)cstable
 
-$(LIBCHARSET_OBJDIR)convcs: $(LIBCHARSET_OBJDIR)libcharset.a
+$(LIBCHARSET_OBJDIR)convcs: $(LIBCHARSET_SRCDIR)test.c \
+	$(LIBCHARSET_OBJDIR)libcharset.a
 	$(CC) $(CFLAGS) -o $(LIBCHARSET_OBJDIR)convcs \
 		$(LIBCHARSET_SRCDIR)test.c \
+		$(LIBCHARSET_OBJDIR)libcharset.a
+
+$(LIBCHARSET_OBJDIR)cstable: $(LIBCHARSET_SRCDIR)cstable.c \
+	$(LIBCHARSET_OBJDIR)libcharset.a
+	$(CC) $(CFLAGS) -o $(LIBCHARSET_OBJDIR)cstable \
+		$(LIBCHARSET_SRCDIR)cstable.c \
 		$(LIBCHARSET_OBJDIR)libcharset.a
 
 LIBCHARSET_OBJS = \
@@ -105,7 +113,8 @@ $(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)hz.o: \
 	$(CC) $(CFLAGS) $(MD) -c -o $@ $<
 
 $(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)iso2022s.o: \
-	$(LIBCHARSET_SRCDIR)iso2022s.c
+	$(LIBCHARSET_SRCDIR)iso2022s.c \
+	$(LIBCHARSET_OBJDIR)sbcsdat.h
 	$(CC) $(CFLAGS) $(MD) -c -o $@ $<
 
 $(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)istate.o: \
@@ -183,14 +192,17 @@ $(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)sbcsdat.o: \
 	$(LIBCHARSET_OBJDIR)sbcsdat.c
 	$(CC) $(CFLAGS) $(MD) -c -o $@ $<
 
-$(LIBCHARSET_OBJDIR)sbcsdat.c: \
+$(LIBCHARSET_OBJDIR)sbcsdat.c $(LIBCHARSET_OBJDIR)sbcsdat.h: \
 	$(LIBCHARSET_SRCDIR)sbcs.dat \
 	$(LIBCHARSET_SRCDIR)sbcsgen.pl
 	perl $(LIBCHARSET_SRCDIR)sbcsgen.pl \
-		$(LIBCHARSET_SRCDIR)sbcs.dat $@
+		$(LIBCHARSET_SRCDIR)sbcs.dat \
+		$(LIBCHARSET_OBJDIR)sbcsdat.c \
+		$(LIBCHARSET_OBJDIR)sbcsdat.h
 
 $(LIBCHARSET_GENPFX)clean:
 	rm -f $(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)*.o \
 		$(LIBCHARSET_OBJDIR)libcharset.a \
 		$(LIBCHARSET_OBJDIR)sbcsdat.c \
+		$(LIBCHARSET_OBJDIR)sbcsdat.h \
 		$(LIBCHARSET_OBJDIR)convcs

@@ -12,6 +12,11 @@
  * of the translation table.
  */
 
+long int sbcs_to_unicode(const struct sbcs_data *sd, long int input_chr)
+{
+    return sd->sbcs2ucs[input_chr];
+}
+
 void read_sbcs(charset_spec const *charset, long int input_chr,
 	       charset_state *state,
 	       void (*emit)(void *ctx, long int output), void *emitctx)
@@ -20,20 +25,12 @@ void read_sbcs(charset_spec const *charset, long int input_chr,
 
     UNUSEDARG(state);
 
-    emit(emitctx, sd->sbcs2ucs[input_chr]);
+    emit(emitctx, sbcs_to_unicode(sd, input_chr));
 }
 
-int write_sbcs(charset_spec const *charset, long int input_chr,
-	       charset_state *state,
-	       void (*emit)(void *ctx, long int output), void *emitctx)
+long int sbcs_from_unicode(const struct sbcs_data *sd, long int input_chr)
 {
-    const struct sbcs_data *sd = charset->data;
     int i, j, k, c;
-
-    UNUSEDARG(state);
-
-    if (input_chr == -1)
-	return TRUE;		       /* stateless; no cleanup required */
 
     /*
      * Binary-search in the ucs2sbcs table.
@@ -48,9 +45,22 @@ int write_sbcs(charset_spec const *charset, long int input_chr,
 	else if (input_chr > (long int)sd->sbcs2ucs[c])
 	    i = k;
 	else {
-	    emit(emitctx, c);
-	    return TRUE;
+	    return c;
 	}
     }
-    return FALSE;
+    return ERROR;
+}
+
+int write_sbcs(charset_spec const *charset, long int input_chr,
+	       charset_state *state,
+	       void (*emit)(void *ctx, long int output), void *emitctx)
+{
+    const struct sbcs_data *sd = charset->data;
+
+    UNUSEDARG(state);
+
+    if (input_chr == -1)
+	return TRUE;		       /* stateless; no cleanup required */
+
+    emit(emitctx, sbcs_from_unicode(sd, input_chr));
 }

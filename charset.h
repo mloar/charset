@@ -45,6 +45,7 @@ typedef enum {
     CS_KOI8_R,
     CS_KOI8_U,
     CS_KOI8_RU,
+    CS_JISX0201,
     CS_MAC_ROMAN,
     CS_MAC_TURKISH,
     CS_MAC_CROATIAN,
@@ -84,6 +85,7 @@ typedef enum {
     CS_HZ,
     CS_CP949,
     CS_PDF,
+    CS_CTEXT,
 } charset_t;
 
 typedef struct {

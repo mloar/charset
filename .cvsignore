@@ -1,1 +1,1 @@
-sbcsdat.c convcs
+sbcsdat.c sbcsdat.h convcs cstable
