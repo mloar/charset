@@ -562,7 +562,8 @@ enum {
     CTEXT_ISO8859_9,
     CTEXT_GB2312,
     CTEXT_KSC5601,
-    CTEXT_JISX0208
+    CTEXT_JISX0208,
+    CTEXT_JISX0212
 };
 static long int ctext_to_ucs(int subcharset, unsigned long bytes)
 {
@@ -598,6 +599,9 @@ static long int ctext_to_ucs(int subcharset, unsigned long bytes)
 				  ((bytes     ) & 0xFF) - 0x21);
       case CTEXT_JISX0208:
 	return jisx0208_to_unicode(((bytes >> 8) & 0xFF) - 0x21,
+				   ((bytes     ) & 0xFF) - 0x21);
+      case CTEXT_JISX0212:
+	return jisx0212_to_unicode(((bytes >> 8) & 0xFF) - 0x21,
 				   ((bytes     ) & 0xFF) - 0x21);
       default: return ERROR;
     }
@@ -666,6 +670,10 @@ static int ctext_from_ucs(long int ucs, int *subcharset, unsigned long *bytes)
 	*subcharset = CTEXT_JISX0208;
 	*bytes = ((r+0x21) << 8) | (c+0x21);
 	return 1;
+    } else if (unicode_to_jisx0212(ucs, &r, &c)) {
+	*subcharset = CTEXT_JISX0212;
+	*bytes = ((r+0x21) << 8) | (c+0x21);
+	return 1;
     } else {
 	return 0;
     }
@@ -688,9 +696,11 @@ static struct iso2022_escape ctext_escapes[] = {
     SEQ("\033$(A", 0|RO, CTEXT_GB2312),
     SEQ("\033$(B", 0|RO, CTEXT_JISX0208),
     SEQ("\033$(C", 0|RO, CTEXT_KSC5601),
+    SEQ("\033$(D", 0|RO, CTEXT_JISX0212),
     SEQ("\033$)A", 1, CTEXT_GB2312),
     SEQ("\033$)B", 1, CTEXT_JISX0208),
     SEQ("\033$)C", 1, CTEXT_KSC5601),
+    SEQ("\033$)D", 1, CTEXT_JISX0212),
     SEQ("\033(B", 0, CTEXT_ASCII),
     SEQ("\033(J", 0, CTEXT_JISX0201_LEFT),
     SEQ("\033)I", 1, CTEXT_JISX0201_RIGHT),
@@ -706,7 +716,7 @@ static struct iso2022_escape ctext_escapes[] = {
 };
 static struct iso2022 ctext = {
     ctext_escapes, lenof(ctext_escapes),
-    "\1\1\1\1\1\1\1\1\1\1\1\1\2\2\2",  /* must match the enum above */
+    "\1\1\1\1\1\1\1\1\1\1\1\1\2\2\2\2",  /* must match the enum above */
     "", 0x80000000 | (CTEXT_ASCII<<0) | (CTEXT_ISO8859_1<<6), "", TRUE,
     ctext_to_ucs, ctext_from_ucs
 };
