@@ -18,7 +18,7 @@ int main(int argc, char **argv)
     wchar_t midbuf[256];
     char *inptr;
     wchar_t *midptr;
-    int inlen, midlen, inret, midret;
+    int rdret, inlen, midlen, inret, midret;
 
     if (argc != 3) {
 	fprintf(stderr, "usage: test <charset> <charset>\n");
@@ -39,10 +39,12 @@ int main(int argc, char **argv)
 
     while (1) {
 
-	if (!fgets(inbuf, sizeof(inbuf), stdin))
+	rdret = fread(inbuf, 1, sizeof(inbuf), stdin);
+
+	if (rdret <= 0)
 	    break;		       /* EOF */
 
-	inlen = strlen(inbuf);
+	inlen = rdret;
 	inptr = inbuf;
 	while ( (inret = charset_to_unicode(&inptr, &inlen, midbuf,
 					    lenof(midbuf), srcset,

@@ -194,10 +194,25 @@ static const struct {
     { "ISO-2022-JP", CS_ISO2022_JP },
     { "csISO2022JP", CS_ISO2022_JP },
 
-#if 0
     { "ISO-2022-KR", CS_ISO2022_KR },
     { "csISO2022KR", CS_ISO2022_KR },
 
+    { "Big5", CS_BIG5 },
+    { "csBig5", CS_BIG5 },
+
+    { "Shift_JIS", CS_SHIFT_JIS },
+    { "MS_Kanji", CS_SHIFT_JIS },
+    { "csShiftJIS", CS_SHIFT_JIS },
+
+    { "HZ-GB-2312", CS_HZ },
+
+    { "UTF-16BE", CS_UTF16BE },
+
+    { "UTF-16LE", CS_UTF16LE },
+
+    { "UTF-16", CS_UTF16 },
+
+#if 0
     { "ISO-2022-JP-2", CS_ISO2022_JP_2 },
     { "csISO2022JP2", CS_ISO2022_JP_2 },
 #endif

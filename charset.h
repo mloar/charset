@@ -67,10 +67,17 @@ typedef enum {
     CS_HP_ROMAN8,
     CS_DEC_MCS,
     CS_UTF8,
+    CS_UTF16,
+    CS_UTF16BE,
+    CS_UTF16LE,
     CS_EUC_JP,
     CS_EUC_CN,
     CS_EUC_KR,
     CS_ISO2022_JP,
+    CS_ISO2022_KR,
+    CS_BIG5,
+    CS_SHIFT_JIS,
+    CS_HZ,
 } charset_t;
 
 typedef struct {

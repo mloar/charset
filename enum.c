@@ -16,6 +16,10 @@
 #define ENUM_CHARSETS
 #include "sbcsdat.c"
 #include "utf8.c"
+#include "utf16.c"
 #include "euc.c"
 #include "iso2022s.c"
+#include "big5enc.c"
+#include "shiftjis.c"
+#include "hz.c"
 #undef ENUM_CHARSETS

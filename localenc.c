@@ -78,6 +78,13 @@ static const struct {
     { "EUC-KR", CS_EUC_KR, 1 },
     { "EUC-JP", CS_EUC_JP, 1 },
     { "ISO-2022-JP", CS_ISO2022_JP, 1 },
+    { "ISO-2022-KR", CS_ISO2022_KR, 1 },
+    { "Big5", CS_BIG5, 1 },
+    { "Shift-JIS", CS_SHIFT_JIS, 1 },
+    { "HZ", CS_HZ, 1 },
+    { "UTF-16BE", CS_UTF16BE, 1 },
+    { "UTF-16LE", CS_UTF16LE, 1 },
+    { "UTF-16", CS_UTF16, 1 },
 };
 
 const char *charset_to_localenc(int charset)

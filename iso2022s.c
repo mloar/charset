@@ -57,6 +57,13 @@ struct iso2022 {
     char const *reset;
 
     /*
+     * Initial value of s1, in case the default container contents
+     * needs to be something other than charset 0 in all cases.
+     * (Note that this must have the top bit set!)
+     */
+    unsigned long s1;
+
+    /*
      * For output, some ISO 2022 subsets _mandate_ an initial shift
      * sequence. If so, here it is so we can output it. (For the
      * sake of basic sanity we won't bother to _require_ it on
@@ -90,14 +97,20 @@ static void read_iso2022s(charset_spec const *charset, long int input_chr,
      * 	  have so far; the remaining three (26:24) give the number
      * 	  of characters we have seen so far.
      * 
-     * 	- The top nibble of s1 (bits 31:28) indicate which
+     * 	- The top bit of s1 (bit 31) is non-zero at all times, to
+     * 	  indicate that we have performed any necessary
+     * 	  initialisation. When we start, we detect a zero s1 and
+     * 	  respond to it by initialising the default container
+     * 	  contents.
+     * 
+     * 	- The next three bits of s1 (bits 30:28) indicate which
      * 	  _container_ is currently selected. This isn't quite as
      * 	  simple as it sounds, since we have to preserve memory of
      * 	  which of the SI/SO containers we came from when we're
      * 	  temporarily in SS2/SS3. Hence, what happens is:
      *     + bit 28 indicates SI/SO.
      * 	   + if we're in an SS2/SS3 container, that's indicated by
-     * 	     the three bits above that being nonzero and holding
+     * 	     the two bits above that being nonzero and holding
      * 	     either 2 or 3.
      * 	   + Hence: 0 is SI, 1 is SO, 4 is SS2-from-SI, 5 is
      * 	     SS2-from-SO, 6 is SS3-from-SI, 7 is SS3-from-SO.
@@ -118,6 +131,10 @@ static void read_iso2022s(charset_spec const *charset, long int input_chr,
      * which might need to be operated on by escape sequences.
      * Cunning, eh?)
      */
+
+    if (!(state->s1 & 0x80000000)) {
+	state->s1 = iso->s1;
+    }
 
     /*
      * So. Firstly, we process escape sequences, if we're in the
@@ -140,8 +157,8 @@ static void read_iso2022s(charset_spec const *charset, long int input_chr,
 	     * If we were in the SS2 or SS3 container, we
 	     * automatically exit it.
 	     */
-	    if (state->s1 & 0xE0000000)
-		state->s1 &= 0x1FFFFFFF;
+	    if (state->s1 & 0x60000000)
+		state->s1 &= 0x9FFFFFFF;
 	    emit(emitctx, ERROR);
 	}
 
@@ -212,8 +229,8 @@ static void read_iso2022s(charset_spec const *charset, long int input_chr,
 	     * If we were in the SS2 or SS3 container, we
 	     * automatically exit it.
 	     */
-	    if (state->s1 & 0xE0000000)
-		state->s1 &= 0x1FFFFFFF;
+	    if (state->s1 & 0x60000000)
+		state->s1 &= 0x9FFFFFFF;
 	}
 
 	emit(emitctx, input_chr);
@@ -231,7 +248,7 @@ static void read_iso2022s(charset_spec const *charset, long int input_chr,
 	chr = ((state->s0 & 0x00FFFFFF) << 8) | input_chr;
 	chrlen = ((state->s1 >> 24) & 0xF) + 1;
 	/* The current sub-charset. */
-	cont = (state->s1 >> 28);
+	cont = (state->s1 >> 28) & 7;
 	if (cont > 1) cont >>= 1;
 	subcharset = (state->s1 >> (6*cont)) & 0x3F;
 	/* The number of bytes-per-character in that sub-charset. */
@@ -248,8 +265,8 @@ static void read_iso2022s(charset_spec const *charset, long int input_chr,
 	     * If we were in the SS2 or SS3 container, we
 	     * automatically exit it.
 	     */
-	    if (state->s1 & 0xE0000000)
-		state->s1 &= 0x1FFFFFFF;
+	    if (state->s1 & 0x60000000)
+		state->s1 &= 0x9FFFFFFF;
 	}
 	state->s0 = (state->s0 & 0xFF000000) | chr;
 	state->s1 = (state->s1 & 0xF0FFFFFF) | (chrlen << 24);
@@ -267,9 +284,16 @@ static void write_iso2022s(charset_spec const *charset, long int input_chr,
 
     /*
      * For output, our s1 state variable contains most of the same
-     * stuff as it did for input - current container, and current
-     * subcharset selected in each container.
+     * stuff as it did for input - initial-state indicator bit,
+     * current container, and current subcharset selected in each
+     * container.
      */
+
+    if (!(state->s1 & 0x80000000)) {
+	state->s1 = iso->s1;
+	for (i = 0; iso->initial_sequence[i]; i++)
+	    emit(emitctx, iso->initial_sequence[i]);
+    }
 
     if (input_chr == -1) {
 	unsigned long oldstate;
@@ -338,9 +362,9 @@ static void write_iso2022s(charset_spec const *charset, long int input_chr,
     } else {
 	/* Emit SI or SO, but only if the current container isn't already
 	 * the right one. */
-	if ((state->s1 >> 28) != cont) {
+	if (((state->s1 >> 28) & 7) != cont) {
 	    emit(emitctx, cont ? SO : SI);
-	    state->s1 = (state->s1 & 0x0FFFFFFF) & (cont << 28);
+	    state->s1 = (state->s1 & 0x8FFFFFFF) | (cont << 28);
 	}
     }
 
@@ -354,6 +378,9 @@ static void write_iso2022s(charset_spec const *charset, long int input_chr,
 
 }
 
+/*
+ * ISO-2022-JP, defined in RFC 1468.
+ */
 static long int iso2022jp_to_ucs(int subcharset, unsigned long bytes)
 {
     switch (subcharset) {
@@ -397,14 +424,56 @@ static struct iso2022_escape iso2022jp_escapes[] = {
 };
 static struct iso2022 iso2022jp = {
     iso2022jp_escapes, lenof(iso2022jp_escapes),
-    "\1\1\2", "\3", NULL, iso2022jp_to_ucs, iso2022jp_from_ucs
+    "\1\1\2", "\3", 0x80000000, NULL, iso2022jp_to_ucs, iso2022jp_from_ucs
 };
 const charset_spec charset_CS_ISO2022_JP = {
     CS_ISO2022_JP, read_iso2022s, write_iso2022s, &iso2022jp
 };
 
+/*
+ * ISO-2022-KR, defined in RFC 1557.
+ */
+static long int iso2022kr_to_ucs(int subcharset, unsigned long bytes)
+{
+    switch (subcharset) {
+      case 0: return bytes;	       /* one-byte ASCII */
+      case 1: return ksx1001_to_unicode(((bytes >> 8) & 0xFF) - 0x21,
+					((bytes     ) & 0xFF) - 0x21);
+      default: return ERROR;
+    }
+}
+static int iso2022kr_from_ucs(long int ucs, int *subcharset,
+			      unsigned long *bytes)
+{
+    int r, c;
+    if (ucs < 0x80) {
+	*subcharset = 0;
+	*bytes = ucs;
+	return 1;
+    } else if (unicode_to_ksx1001(ucs, &r, &c)) {
+	*subcharset = 1;
+	*bytes = ((r+0x21) << 8) | (c+0x21);
+	return 1;
+    } else {
+	return 0;
+    }
+}
+static struct iso2022_escape iso2022kr_escapes[] = {
+    {"\016", 0x8FFFFFFF, 0x10000000, -1, -1},
+    {"\017", 0x8FFFFFFF, 0x00000000, 0, 0},
+    {"\033$)C", 0xFFFFF03F, 0x00000040, 1, 1},   /* bits[11:6] <- 1 */
+};
+static struct iso2022 iso2022kr = {
+    iso2022kr_escapes, lenof(iso2022kr_escapes),
+    "\1\2", "\2", 0x80000040, "\033$)C", iso2022kr_to_ucs, iso2022kr_from_ucs
+};
+const charset_spec charset_CS_ISO2022_KR = {
+    CS_ISO2022_KR, read_iso2022s, write_iso2022s, &iso2022kr
+};
+
 #else /* ENUM_CHARSETS */
 
 ENUM_CHARSET(CS_ISO2022_JP)
+ENUM_CHARSET(CS_ISO2022_KR)
 
 #endif /* ENUM_CHARSETS */
