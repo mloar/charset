@@ -189,8 +189,18 @@ static void write_utf7(charset_spec const *charset, long int input_chr,
 	return;
     }
 
+    /*
+     * Look for characters which we output in ASCII mode. A special
+     * case here is +, which can be encoded as the empty base64
+     * escape sequence `+-': if we're _already_ in ASCII mode we do
+     * that, but if we're in base64 mode at the point we see the +
+     * then we simply stay in base64 mode and output it as a
+     * halfword. (Switching back would cost three bytes, whereas
+     * staying in base64 costs only 2 2/3.)
+     */
     if (input_chr == -1 || SET_D(input_chr) ||
-	(charset->charset == CS_UTF7 && SET_O(input_chr))) {
+	(charset->charset == CS_UTF7 && SET_O(input_chr)) ||
+	(!state->s0 && input_chr == '+')) {
 	if (state->s0) {
 	    /*
 	     * These characters are output in ASCII mode, so flush any
@@ -212,6 +222,8 @@ static void write_utf7(charset_spec const *charset, long int input_chr,
 	 */
 	if (input_chr != -1)	       /* special case: just reset state */
 	    emit(emitctx, input_chr);
+	if (input_chr == '+')
+	    emit(emitctx, '-');	       /* +- encodes + */
 	return;
     }
 
