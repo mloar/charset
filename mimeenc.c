@@ -27,13 +27,13 @@ static const struct {
      * are marked with a comment saying WILD.
      */
 
+    { "US-ASCII", CS_ASCII },
     { "ANSI_X3.4-1968", CS_ASCII },
     { "iso-ir-6", CS_ASCII },
     { "ANSI_X3.4-1986", CS_ASCII },
     { "ISO_646.irv:1991", CS_ASCII },
     { "ASCII", CS_ASCII },
     { "ISO646-US", CS_ASCII },
-    { "US-ASCII", CS_ASCII },
     { "us", CS_ASCII },
     { "IBM367", CS_ASCII },
     { "cp367", CS_ASCII },
