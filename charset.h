@@ -174,4 +174,22 @@ int charset_localenc_nth(int n);
 int charset_from_macenc(int script, int region, int sysvers,
 			const char *fontname);
 
+/*
+ * Upgrade a charset identifier to a superset charset which is
+ * often confused with it. For example, people whose MUAs report
+ * their mail as ASCII or ISO8859-1 often in practice turn out to
+ * be using CP1252 quote characters, so when parsing incoming mail
+ * it is prudent to treat ASCII and ISO8859-1 as aliases for CP1252
+ * - and since it's a superset of both, this will cause no
+ * genuinely correct mail to be parsed wrongly.
+ */
+int charset_upgrade(int charset);
+
+/*
+ * This function returns TRUE if the input charset is a vaguely
+ * sensible superset of ASCII. That is, it returns FALSE for 7-bit
+ * encoding formats such as HZ and UTF-7.
+ */
+int charset_contains_ascii(int charset);
+
 #endif /* charset_charset_h */
