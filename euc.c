@@ -102,6 +102,9 @@ static void write_euc(charset_spec const *charset, long int input_chr,
 
     UNUSEDARG(state);
 
+    if (input_chr == -1)
+	return;			       /* stateless; no cleanup required */
+
     /* ASCII is the easy bit, and is always the same. */
     if (input_chr < 0x80) {
 	emit(emitctx, input_chr);

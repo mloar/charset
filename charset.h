@@ -70,11 +70,14 @@ typedef enum {
     CS_EUC_JP,
     CS_EUC_CN,
     CS_EUC_KR,
+    CS_ISO2022_JP,
 } charset_t;
 
 typedef struct {
-    unsigned long s0;
+    unsigned long s0, s1;
 } charset_state;
+
+#define CHARSET_INIT_STATE { 0L, 0L }  /* a suitable initialiser */
 
 /*
  * Routine to convert a MB/SB character set to Unicode.
@@ -121,6 +124,10 @@ int charset_to_unicode(char **input, int *inlen, wchar_t *output, int outlen,
  * `errlen' will be ignored, and the library will choose something
  * sensible to do on its own (which will vary depending on the
  * output charset).
+ * 
+ * If `input' is NULL, this routine will output the necessary bytes
+ * to reset the encoding state in any way which might be required
+ * at the end of an output piece of text.
  */
 
 int charset_from_unicode(wchar_t **input, int *inlen, char *output, int outlen,

@@ -17,4 +17,5 @@
 #include "sbcsdat.c"
 #include "utf8.c"
 #include "euc.c"
+#include "iso2022s.c"
 #undef ENUM_CHARSETS

@@ -32,6 +32,9 @@ void write_sbcs(charset_spec const *charset, long int input_chr,
 
     UNUSEDARG(state);
 
+    if (input_chr == -1)
+	return;			       /* stateless; no cleanup required */
+
     /*
      * Binary-search in the ucs2sbcs table.
      */

@@ -51,7 +51,7 @@ int charset_to_unicode(char **input, int *inlen, wchar_t *output, int outlen,
 		       const wchar_t *errstr, int errlen)
 {
     charset_spec const *spec = charset_find_spec(charset);
-    charset_state localstate;
+    charset_state localstate = CHARSET_INIT_STATE;
     struct unicode_emit_param param;
 
     param.output = output;
@@ -60,11 +60,8 @@ int charset_to_unicode(char **input, int *inlen, wchar_t *output, int outlen,
     param.errlen = errlen;
     param.stopped = 0;
 
-    if (!state) {
-	localstate.s0 = 0;
-    } else {
+    if (state)
 	localstate = *state;	       /* structure copy */
-    }
 
     while (*inlen > 0) {
 	int lenbefore = param.output - output;

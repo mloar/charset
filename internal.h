@@ -31,6 +31,10 @@ struct charset_spec {
      * character set. The `emit' function expects to get byte
      * values passed to it; it should be sent ERROR for any
      * non-representable characters on the input.
+     * 
+     * If `input_chr' is -1, this function must revert the encoding
+     * state to any default required at the end of a piece of
+     * encoded text.
      */
     void (*write)(charset_spec const *charset, long int input_chr,
 		  charset_state *state,

@@ -45,8 +45,14 @@ int charset_from_unicode(wchar_t **input, int *inlen, char *output, int outlen,
 			 const char *errstr, int errlen)
 {
     charset_spec const *spec = charset_find_spec(charset);
-    charset_state localstate;
+    charset_state localstate = CHARSET_INIT_STATE;
     struct charset_emit_param param;
+    int locallen;
+
+    if (!input) {
+	locallen = 1;
+	inlen = &locallen;
+    }
 
     param.output = output;
     param.outlen = outlen;
@@ -63,16 +69,15 @@ int charset_from_unicode(wchar_t **input, int *inlen, char *output, int outlen,
     param.errstr = errstr;
     param.errlen = errlen;
 
-    if (!state) {
-	localstate.s0 = 0;
-    } else {
+    if (state)
 	localstate = *state;	       /* structure copy */
-    }
-    state = &localstate;
 
     while (*inlen > 0) {
 	int lenbefore = param.output - output;
-	spec->write(spec, **input, &localstate, charset_emit, &param);
+	if (input)
+	    spec->write(spec, **input, &localstate, charset_emit, &param);
+	else
+	    spec->write(spec, -1, &localstate, charset_emit, &param);
 	if (param.stopped) {
 	    /*
 	     * The emit function has _tried_ to output some
@@ -84,7 +89,8 @@ int charset_from_unicode(wchar_t **input, int *inlen, char *output, int outlen,
 	}
 	if (state)
 	    *state = localstate;       /* structure copy */
-	(*input)++;
+	if (input)
+	    (*input)++;
 	(*inlen)--;
     }
     return param.output - output;

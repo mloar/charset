@@ -77,6 +77,7 @@ static const struct {
     { "EUC-CN", CS_EUC_CN, 1 },
     { "EUC-KR", CS_EUC_KR, 1 },
     { "EUC-JP", CS_EUC_JP, 1 },
+    { "ISO-2022-JP", CS_ISO2022_JP, 1 },
 };
 
 const char *charset_to_localenc(int charset)

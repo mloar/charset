@@ -193,6 +193,9 @@ void write_utf8(charset_spec const *charset, long int input_chr,
     UNUSEDARG(charset);
     UNUSEDARG(state);
 
+    if (input_chr == -1)
+	return;			       /* stateless; no cleanup required */
+
     /*
      * Refuse to output any illegal code points.
      */

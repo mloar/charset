@@ -182,6 +182,25 @@ static const struct {
      * it is. Shrug.
      */
     { "GB2312", CS_EUC_CN },
+    { "csGB2312", CS_EUC_CN },
+
+    { "EUC-KR", CS_EUC_KR },
+    { "csEUCKR", CS_EUC_KR },
+
+    { "EUC-JP", CS_EUC_JP },
+    { "csEUCPkdFmtJapanese", CS_EUC_JP },
+    { "Extended_UNIX_Code_Packed_Format_for_Japanese", CS_EUC_JP },
+
+    { "ISO-2022-JP", CS_ISO2022_JP },
+    { "csISO2022JP", CS_ISO2022_JP },
+
+#if 0
+    { "ISO-2022-KR", CS_ISO2022_KR },
+    { "csISO2022KR", CS_ISO2022_KR },
+
+    { "ISO-2022-JP-2", CS_ISO2022_JP_2 },
+    { "csISO2022JP2", CS_ISO2022_JP_2 },
+#endif
 };
 
 const char *charset_to_mimeenc(int charset)

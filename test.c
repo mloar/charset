@@ -12,7 +12,13 @@
 int main(int argc, char **argv)
 {
     int srcset, dstset;
-    charset_state instate = {0}, outstate = {0};
+    charset_state instate = CHARSET_INIT_STATE;
+    charset_state outstate = CHARSET_INIT_STATE;
+    char inbuf[256], outbuf[256];
+    wchar_t midbuf[256];
+    char *inptr;
+    wchar_t *midptr;
+    int inlen, midlen, inret, midret;
 
     if (argc != 3) {
 	fprintf(stderr, "usage: test <charset> <charset>\n");
@@ -32,11 +38,6 @@ int main(int argc, char **argv)
     }
 
     while (1) {
-	char inbuf[256], outbuf[256];
-	wchar_t midbuf[256];
-	char *inptr;
-	wchar_t *midptr;
-	int inlen, midlen, inret, midret;
 
 	if (!fgets(inbuf, sizeof(inbuf), stdin))
 	    break;		       /* EOF */
@@ -54,7 +55,15 @@ int main(int argc, char **argv)
 		fwrite(outbuf, 1, midret, stdout);
 	    }
 	}
+    }
 
+    /*
+     * Reset encoding state.
+     */
+    while ( (midret = charset_from_unicode(NULL, NULL, outbuf,
+					   lenof(outbuf), dstset,
+					   &outstate, NULL, 0)) > 0) {
+	fwrite(outbuf, 1, midret, stdout);
     }
 
     return 0;
