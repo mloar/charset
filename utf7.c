@@ -35,7 +35,7 @@ static const unsigned char utf7_ascii_properties[128] = {
 			  (c) >= '0' && (c) <= '9' ? (c) - '0' + 52 : \
 			  (c) == '+' ? 62 : 63 )
 
-static const char *base64_chars =
+static const char *const base64_chars =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 static void read_utf7(charset_spec const *charset, long int input_chr,

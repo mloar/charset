@@ -42,7 +42,7 @@ struct iso2022 {
      * in ASCII order, so that we can narrow down the list as
      * necessary.
      */
-    struct iso2022_escape *escapes;    /* must be sorted in ASCII order! */
+    const struct iso2022_escape *escapes;/* must be sorted in ASCII order! */
     int nescapes;
 
     /*
@@ -482,13 +482,13 @@ static int iso2022jp_from_ucs(long int ucs, int *subcharset,
 	return 0;
     }
 }
-static struct iso2022_escape iso2022jp_escapes[] = {
+static const struct iso2022_escape iso2022jp_escapes[] = {
     {"\033$@", 0xFFFFFFC0, 0x00000002, -1, -1},   /* we ignore this one */
     {"\033$B", 0xFFFFFFC0, 0x00000002, 0, 2},
     {"\033(B", 0xFFFFFFC0, 0x00000000, 0, 0},
     {"\033(J", 0xFFFFFFC0, 0x00000001, 0, 1},
 };
-static struct iso2022 iso2022jp = {
+static const struct iso2022 iso2022jp = {
     iso2022jp_escapes, lenof(iso2022jp_escapes),
     "\1\1\2", "\3", 0x80000000, NULL, FALSE,
     iso2022jp_to_ucs, iso2022jp_from_ucs
@@ -525,12 +525,12 @@ static int iso2022kr_from_ucs(long int ucs, int *subcharset,
 	return 0;
     }
 }
-static struct iso2022_escape iso2022kr_escapes[] = {
+static const struct iso2022_escape iso2022kr_escapes[] = {
     {"\016", 0x8FFFFFFF, 0x10000000, -1, -1},
     {"\017", 0x8FFFFFFF, 0x00000000, 0, 0},
     {"\033$)C", 0xFFFFF03F, 0x00000040, 1, 1},   /* bits[11:6] <- 1 */
 };
-static struct iso2022 iso2022kr = {
+static const struct iso2022 iso2022kr = {
     iso2022kr_escapes, lenof(iso2022kr_escapes),
     "\1\2", "\2", 0x80000040, "\033$)C", FALSE,
     iso2022kr_to_ucs, iso2022kr_from_ucs
@@ -692,7 +692,7 @@ static int ctext_from_ucs(long int ucs, int *subcharset, unsigned long *bytes)
  *    in either; we prefer GR where possible since this leads to a
  *    more compact EUC-like encoding.
  */
-static struct iso2022_escape ctext_escapes[] = {
+static const struct iso2022_escape ctext_escapes[] = {
     SEQ("\033$(A", 0|RO, CTEXT_GB2312),
     SEQ("\033$(B", 0|RO, CTEXT_JISX0208),
     SEQ("\033$(C", 0|RO, CTEXT_KSC5601),
@@ -714,7 +714,7 @@ static struct iso2022_escape ctext_escapes[] = {
     SEQ("\033-L", 1, CTEXT_ISO8859_5),
     SEQ("\033-M", 1, CTEXT_ISO8859_9),
 };
-static struct iso2022 ctext = {
+static const struct iso2022 ctext = {
     ctext_escapes, lenof(ctext_escapes),
     "\1\1\1\1\1\1\1\1\1\1\1\1\2\2\2\2",  /* must match the enum above */
     "", 0x80000000 | (CTEXT_ASCII<<0) | (CTEXT_ISO8859_1<<6), "", TRUE,
