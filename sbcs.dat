@@ -1142,3 +1142,128 @@ XXXX 00a1 00a2 00a3 XXXX 00a5 XXXX 00a7 00a4 00a9 00aa 00ab XXXX XXXX XXXX XXXX
 XXXX 00d1 00d2 00d3 00d4 00d5 00d6 0152 00d8 00d9 00da 00db 00dc 0178 XXXX 00df
 00e0 00e1 00e2 00e3 00e4 00e5 00e6 00e7 00e8 00e9 00ea 00eb 00ec 00ed 00ee 00ef
 XXXX 00f1 00f2 00f3 00f4 00f5 00f6 0153 00f8 00f9 00fa 00fb 00fc 00ff XXXX XXXX
+
+  PDFDocEncoding is a custom superset of ISO-8859-1, used for
+  non-printed text strings in PDF documents (things like document
+  outline entries and metadata). Obtaining its conversion table is
+  fiddly; I had to cut and paste PS character names and octal
+  encoding positions from Appendix D of the PDF specification, then
+  look up each PostScript character name in the Adobe Glyph List to
+  convert it to Unicode.
+
+  The Adobe Glyph List is at
+    http://partners.adobe.com/asn/tech/type/glyphlist.txt
+
+  and the somewhat unwieldy shell script I used looked like this:
+
+  for c1 in 0 1 2 3 4 5 6 7 8 9 A B C D E F; do
+    for c2 in 0 1; do
+      eval "chr$[16*$c2 + 0x$c1]=00$c2$c1"
+    done
+  done
+  char() {
+    if grep -q "^$1;" glyphlist.txt; then
+      oifs="$IFS"
+      IFS=\;
+      set -- $[0$2] `grep "^$1;" glyphlist.txt`
+      IFS="$oifs"
+      eval "chr$1=$3";
+    else
+      echo "/$1 not found!"
+    fi
+  }
+  char A 101; char AE 306; char Aacute 301; char Acircumflex 302;
+  char Adieresis 304; char Agrave 300; char Aring 305;
+  char Atilde 303; char B 102; char C 103; char Ccedilla 307;
+  char D 104; char E 105; char Eacute 311; char Ecircumflex 312;
+  char Edieresis 313; char Egrave 310; char Eth 320; char Euro 240;
+  char F 106; char G 107; char H 110; char I 111; char Iacute 315;
+  char Icircumflex 316; char Idieresis 317; char Igrave 314;
+  char J 112; char K 113; char L 114; char Lslash 225; char M 115;
+  char N 116; char Ntilde 321; char O 117; char OE 226;
+  char Oacute 323; char Ocircumflex 324; char Odieresis 326;
+  char Ograve 322; char Oslash 330; char Otilde 325; char P 120;
+  char Q 121; char R 122; char S 123; char Scaron 227; char T 124;
+  char Thorn 336; char U 125; char Uacute 332; char Ucircumflex 333;
+  char Udieresis 334; char Ugrave 331; char V 126; char W 127;
+  char X 130; char Y 131; char Yacute 335; char Ydieresis 230;
+  char Z 132; char Zcaron 231; char a 141; char aacute 341;
+  char acircumflex 342; char acute 264; char adieresis 344;
+  char ae 346; char agrave 340; char ampersand 046; char aring 345;
+  char asciicircum 136; char asciitilde 176; char asterisk 052;
+  char at 100; char atilde 343; char b 142; char backslash 134;
+  char bar 174; char braceleft 173; char braceright 175;
+  char bracketleft 133; char bracketright 135; char breve 030;
+  char brokenbar 246; char bullet 200; char c 143; char caron 031;
+  char ccedilla 347; char cedilla 270; char cent 242;
+  char circumflex 032; char colon 072; char comma 054;
+  char copyright 251; char currency 244; char d 144;
+  char dagger 201; char daggerdbl 202; char degree 260;
+  char dieresis 250; char divide 367; char dollar 044;
+  char dotaccent 033; char dotlessi 232; char e 145;
+  char eacute 351; char ecircumflex 352; char edieresis 353;
+  char egrave 350; char eight 070; char ellipsis 203;
+  char emdash 204; char endash 205; char equal 075; char eth 360;
+  char exclam 041; char exclamdown 241; char f 146; char fi 223;
+  char five 065; char fl 224; char florin 206; char four 064;
+  char fraction 207; char g 147; char germandbls 337;
+  char grave 140; char greater 076; char guillemotleft 253;
+  char guillemotright 273; char guilsinglleft 210;
+  char guilsinglright 211; char h 150; char hungarumlaut 034;
+  char hyphen 055; char i 151; char iacute 355;
+  char icircumflex 356; char idieresis 357; char igrave 354;
+  char j 152; char k 153; char l 154; char less 074;
+  char logicalnot 254; char lslash 233; char m 155; char macron 257;
+  char minus 212; char mu 265; char multiply 327; char n 156;
+  char nine 071; char ntilde 361; char numbersign 043; char o 157;
+  char oacute 363; char ocircumflex 364; char odieresis 366;
+  char oe 234; char ogonek 035; char ograve 362; char one 061;
+  char onehalf 275; char onequarter 274; char onesuperior 271;
+  char ordfeminine 252; char ordmasculine 272; char oslash 370;
+  char otilde 365; char p 160; char paragraph 266;
+  char parenleft 050; char parenright 051; char percent 045;
+  char period 056; char periodcentered 267; char perthousand 213;
+  char plus 053; char plusminus 261; char q 161; char question 077;
+  char questiondown 277; char quotedbl 042; char quotedblbase 214;
+  char quotedblleft 215; char quotedblright 216; char quoteleft 217;
+  char quoteright 220; char quotesinglbase 221;
+  char quotesingle 047; char r 162; char registered 256;
+  char ring 036; char s 163; char scaron 235; char section 247;
+  char semicolon 073; char seven 067; char six 066; char slash 057;
+  char space 040; char sterling 243; char t 164; char thorn 376;
+  char three 063; char threequarters 276; char threesuperior 263;
+  char tilde 037; char trademark 222; char two 062;
+  char twosuperior 262; char u 165; char uacute 372;
+  char ucircumflex 373; char udieresis 374; char ugrave 371;
+  char underscore 137; char v 166; char w 167; char x 170;
+  char y 171; char yacute 375; char ydieresis 377; char yen 245;
+  char z 172; char zcaron 236; char zero 060;
+  for row in 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+    for col in 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+      val=$[16*$row + $col]
+      eval "code=\${chr$val-XXXX}"
+      if [ $col == 15 ]; then
+        echo "$code"
+      else
+        echo -n "$code "
+      fi
+    done
+  done
+
+charset CS_PDF
+0000 0001 0002 0003 0004 0005 0006 0007 0008 0009 000A 000B 000C 000D 000E 000F
+0010 0011 0012 0013 0014 0015 0016 0017 02D8 02C7 02C6 02D9 02DD 02DB 02DA 02DC
+0020 0021 0022 0023 0024 0025 0026 0027 0028 0029 002A 002B 002C 002D 002E 002F
+0030 0031 0032 0033 0034 0035 0036 0037 0038 0039 003A 003B 003C 003D 003E 003F
+0040 0041 0042 0043 0044 0045 0046 0047 0048 0049 004A 004B 004C 004D 004E 004F
+0050 0051 0052 0053 0054 0055 0056 0057 0058 0059 005A 005B 005C 005D 005E 005F
+0060 0061 0062 0063 0064 0065 0066 0067 0068 0069 006A 006B 006C 006D 006E 006F
+0070 0071 0072 0073 0074 0075 0076 0077 0078 0079 007A 007B 007C 007D 007E XXXX
+2022 2020 2021 2026 2014 2013 0192 2044 2039 203A 2212 2030 201E 201C 201D 2018
+2019 201A 2122 FB01 FB02 0141 0152 0160 0178 017D 0131 0142 0153 0161 017E XXXX
+20AC 00A1 00A2 00A3 00A4 00A5 00A6 00A7 00A8 00A9 00AA 00AB 00AC XXXX 00AE 00AF
+00B0 00B1 00B2 00B3 00B4 00B5 00B6 00B7 00B8 00B9 00BA 00BB 00BC 00BD 00BE 00BF
+00C0 00C1 00C2 00C3 00C4 00C5 00C6 00C7 00C8 00C9 00CA 00CB 00CC 00CD 00CE 00CF
+00D0 00D1 00D2 00D3 00D4 00D5 00D6 00D7 00D8 00D9 00DA 00DB 00DC 00DD 00DE 00DF
+00E0 00E1 00E2 00E3 00E4 00E5 00E6 00E7 00E8 00E9 00EA 00EB 00EC 00ED 00EE 00EF
+00F0 00F1 00F2 00F3 00F4 00F5 00F6 00F7 00F8 00F9 00FA 00FB 00FC 00FD 00FE 00FF

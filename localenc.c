@@ -90,6 +90,7 @@ static const struct {
     { "UTF-16LE", CS_UTF16LE, 1 },
     { "UTF-16", CS_UTF16, 1 },
     { "CP949", CS_CP949, 1 },
+    { "PDFDocEncoding", CS_PDF, 1 },
 };
 
 const char *charset_to_localenc(int charset)

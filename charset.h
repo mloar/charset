@@ -83,6 +83,7 @@ typedef enum {
     CS_SHIFT_JIS,
     CS_HZ,
     CS_CP949,
+    CS_PDF,
 } charset_t;
 
 typedef struct {
