@@ -1,5 +1,5 @@
 /*
- * utf7.c - routines to handle UTF-7.
+ * utf7.c - routines to handle UTF-7 (RFC 1642 / RFC 2152).
  */
 
 #ifndef ENUM_CHARSETS
