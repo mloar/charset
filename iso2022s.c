@@ -299,8 +299,9 @@ static int write_iso2022s(charset_spec const *charset, long int input_chr,
 
     if (!(state->s1 & 0x80000000)) {
 	state->s1 = iso->s1;
-	for (i = 0; iso->initial_sequence[i]; i++)
-	    emit(emitctx, iso->initial_sequence[i]);
+	if (iso->initial_sequence)
+	    for (i = 0; iso->initial_sequence[i]; i++)
+		emit(emitctx, iso->initial_sequence[i]);
     }
 
     if (input_chr == -1) {
