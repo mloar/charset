@@ -50,6 +50,7 @@ static const struct {
     { "CP1258", CS_CP1258, 1 },
     { "KOI8-R", CS_KOI8_R, 1 },
     { "KOI8-U", CS_KOI8_U, 1 },
+    { "KOI8-RU", CS_KOI8_RU, 1 },
     { "Mac Roman", CS_MAC_ROMAN, 1 },
     { "Mac Turkish", CS_MAC_TURKISH, 1 },
     { "Mac Croatian", CS_MAC_CROATIAN, 1 },

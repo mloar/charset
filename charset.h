@@ -43,6 +43,7 @@ typedef enum {
     CS_CP1258,
     CS_KOI8_R,
     CS_KOI8_U,
+    CS_KOI8_RU,
     CS_MAC_ROMAN,
     CS_MAC_TURKISH,
     CS_MAC_CROATIAN,

@@ -185,6 +185,8 @@ static const struct {
 
     { "KOI8-U", CS_KOI8_U },
 
+    { "KOI8-RU", CS_KOI8_RU },	       /* WILD */
+
     { "macintosh", CS_MAC_ROMAN_OLD },
     { "mac", CS_MAC_ROMAN_OLD },
     { "csMacintosh", CS_MAC_ROMAN_OLD },
