@@ -26,6 +26,20 @@ static const struct {
      * page, but which I've seen in the wild in real mail. These
      * are marked with a comment saying WILD.
      */
+
+    { "ANSI_X3.4-1968", CS_ASCII },
+    { "iso-ir-6", CS_ASCII },
+    { "ANSI_X3.4-1986", CS_ASCII },
+    { "ISO_646.irv:1991", CS_ASCII },
+    { "ASCII", CS_ASCII },
+    { "ISO646-US", CS_ASCII },
+    { "US-ASCII (preferred MIME name)", CS_ASCII },
+    { "us", CS_ASCII },
+    { "IBM367", CS_ASCII },
+    { "cp367", CS_ASCII },
+    { "csASCII", CS_ASCII },
+    { "646", CS_ASCII },	       /* WILD */
+
     { "ISO-8859-1", CS_ISO8859_1 },
     { "ISO8859-1", CS_ISO8859_1 },     /* WILD */
     { "iso-ir-100", CS_ISO8859_1 },
