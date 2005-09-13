@@ -713,6 +713,33 @@ static const struct iso2022_escape ctext_escapes[] = {
     SEQ("\033-H", 1, CTEXT_ISO8859_8),
     SEQ("\033-L", 1, CTEXT_ISO8859_5),
     SEQ("\033-M", 1, CTEXT_ISO8859_9),
+
+    /*
+     * Cross-testing against Xutf8TextListToTextProperty() turns up
+     * some additional character sets and ISO 2022 features
+     * supported by that and not by us:
+     * 
+     * 	- Single-byte right-hand-half character sets `ESC - f',
+     * 	  `ESC - T' and `ESC - Y'.
+     * 
+     * 	- A really horrifying mechanism used to escape completely
+     * 	  from the ISO 2022 framework: ESC % / <length>
+     * 	  <charset-name> <text>. Xutf8* uses this to encode
+     * 	  "iso8859-14", "iso8859-15" and "big5-0".
+     * 	   * This mechanism is particularly nasty because we can't
+     * 	     efficiently encode it on the fly! It requires that the
+     * 	     length of the text encoded in the foreign charset is
+     * 	     given _before_ the text in question, so if we're
+     * 	     receiving one character at a time we simply can't look
+     * 	     ahead and so we would have to encode each individual
+     * 	     character in a separate one of these sequences.
+     * 
+     * 	- ESC % G and ESC % @ to shift to and from UTF-8 mode, as a
+     * 	  last resort for anything we still don't support.
+     * 	   * Interestingly, ctext.ps actually _disallows_ this: it
+     * 	     says that the above extension mechanism is the only
+     * 	     one permitted. Ho hum.
+     */
 };
 static const struct iso2022 ctext = {
     ctext_escapes, lenof(ctext_escapes),
