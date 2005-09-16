@@ -18,38 +18,36 @@ static void read_utf8(charset_spec const *charset, long int input_chr,
     UNUSEDARG(charset);
 
     /*
-     * For reading UTF-8, the `state' word contains:
-     * 
-     *  - in bits 29-31, the number of bytes expected to be in the
-     *    current multibyte character (which we can tell instantly
-     *    from the first byte, of course).
-     * 
-     *  - in bits 26-28, the number of bytes _seen so far_ in the
-     *    current multibyte character.
-     * 
-     *  - in the remainder of the word, the current value of the
-     *    character, which is shifted upwards by 6 bits to
-     *    accommodate each new byte.
+     * For reading UTF-8, the `state' word contains the character
+     * being accumulated.  This is shifted left by six bits each
+     * time a character is added, and there's a single '1' bit
+     * in what would be bit 31 of the final character, which we
+     * use to detect when it's complete.
      * 
      * As required, the state is zero when we are not in the middle
      * of a multibyte character at all.
      * 
      * For example, when reading E9 8D 8B, starting at state=0:
      * 
-     *  - after E9, the state is 0x64000009
-     *  - after 8D, the state is 0x6800024d
-     *  - after 8B, the state conceptually becomes 0x6c00934b, at
+     *  - after E9, the state is 0x00080009
+     *  - after 8D, the state is 0x0200024d
+     *  - after 8B, the state conceptually becomes 0x8000934b, at
      *    which point we notice we've got as many characters as we
      *    were expecting, output U+934B, and reset the state to
      *    zero.
+     *
+     * If we detect an overlong sequence, we shift the marker bit
+     * right one bit.  This is safe because an overlong sequence
+     * can't encode a top-bit-set character.  Not that we worry
+     * about what overlong sequences are trying to encode, but
+     * it's nice to know that we could if we wanted to.
      *
      * Note that the maximum number of bits we might need to store
      * in the character value field is 25 (U+7FFFFFFF contains 31
      * bits, but we will never actually store its full value
      * because when we receive the last 6 bits in the final
      * continuation byte we will output it and revert the state to
-     * zero). Hence the character value field never collides with
-     * the byte counts.
+     * zero). Hence we need 26 bits in total.
      */
 
     if (input_chr < 0x80) {
@@ -83,25 +81,44 @@ static void read_utf8(charset_spec const *charset, long int input_chr,
 	    emit(emitctx, ERROR);
 	} else {
 	    unsigned long charval;
-	    unsigned long topstuff;
-	    int bytes;
 
 	    /*
 	     * Otherwise, accumulate more of the character value.
 	     */
-	    charval = state->s0 & 0x03ffffffL;
+	    charval = state->s0;
 	    charval = (charval << 6) | (input_chr & 0x3F);
+
+	    /*
+	     * Detect overlong encodings.  We're looking for too many
+	     * leading zeroes given our position in the character.  If
+	     * we find an overlong encoding, clear the current marker
+	     * bit and set the bit below it.  Overlong two-byte
+	     * encodings are a special case, and are detected when we
+	     * read their inital byte.
+	     */
+	    if ((charval & 0xffffffe0L) == 0x02000000L)
+		charval ^= 0x03000000L;
+	    else if ((charval & 0xfffffff0L) == 0x00080000L)
+		charval ^= 0x000c0000L;
+	    else if ((charval & 0xfffffff8L) == 0x00002000L)
+		charval ^= 0x00003000L;
+	    else if ((charval & 0xfffffffcL) == 0x00000080L)
+		charval ^= 0x000000c0L;
 
 	    /*
 	     * Check the byte counts; if we have not reached the
 	     * end of the character, update the state and return.
 	     */
-	    topstuff = state->s0 & 0xfc000000L;
-	    topstuff += 0x04000000L;   /* add one to the byte count */
-	    if (((topstuff << 3) ^ topstuff) & 0xe0000000L) {
-		state->s0 = topstuff | charval;
+	    if (!(charval & 0xc0000000L)) {
+		state->s0 = charval;
 		return;
 	    }
+
+	    /*
+	     * Clear the marker bit, or set it if it's clear,
+	     * indicating an overlong sequence.
+	     */
+	    charval ^= 0x80000000L;
 
 	    /*
 	     * Now we know we've reached the end of the character.
@@ -110,10 +127,12 @@ static void read_utf8(charset_spec const *charset, long int input_chr,
 	     * charval or an error. In all cases we reset the state
 	     * to zero.
 	     */
-	    bytes = topstuff >> 29;
 	    state->s0 = 0;
 
-	    if (charval >= 0xD800 && charval < 0xE000) {
+	    if (charval & 0x80000000L) {
+		/* We got an overlong sequence. */
+		emit(emitctx, ERROR);
+	    } else if (charval >= 0xD800 && charval < 0xE000) {
 		/*
 		 * Surrogates (0xD800-0xDFFF) may never be encoded
 		 * in UTF-8. A surrogate pair in Unicode should
@@ -127,16 +146,6 @@ static void read_utf8(charset_spec const *charset, long int input_chr,
 		 * and may never be encoded in UTF-8. (This is one
 		 * reason why U+FFFF is our way of signalling an
 		 * error to our `emit' function :-)
-		 */
-		emit(emitctx, ERROR);
-	    } else if ((charval <= 0x7FL /* && bytes > 1 */) ||
-		       (charval <= 0x7FFL && bytes > 2) ||
-		       (charval <= 0xFFFFL && bytes > 3) ||
-		       (charval <= 0x1FFFFFL && bytes > 4) ||
-		       (charval <= 0x3FFFFFFL && bytes > 5)) {
-		/*
-		 * Overlong sequences are not to be tolerated,
-		 * under any circumstances.
 		 */
 		emit(emitctx, ERROR);
 	    } else {
@@ -160,16 +169,19 @@ static void read_utf8(charset_spec const *charset, long int input_chr,
 	 * bytes we expect to see in this character, and extract
 	 * the initial bits of it too.
 	 */
-	if (input_chr >= 0xC0 && input_chr < 0xE0) {
-	    state->s0 = 0x44000000L | (input_chr & 0x1F);
+	if (input_chr >= 0xC0 && input_chr < 0xC2) {
+	    /* beginning of an overlong two-byte sequence */
+	    state->s0 = 0x01000000L | (input_chr & 0x1F);
+	} else if (input_chr >= 0xC2 && input_chr < 0xE0) {
+	    state->s0 = 0x02000000L | (input_chr & 0x1F);
 	} else if (input_chr >= 0xE0 && input_chr < 0xF0) {
-	    state->s0 = 0x64000000L | (input_chr & 0x0F);
+	    state->s0 = 0x00080000L | (input_chr & 0x0F);
 	} else if (input_chr >= 0xF0 && input_chr < 0xF8) {
-	    state->s0 = 0x84000000L | (input_chr & 0x07);
+	    state->s0 = 0x00002000L | (input_chr & 0x07);
 	} else if (input_chr >= 0xF8 && input_chr < 0xFC) {
-	    state->s0 = 0xa4000000L | (input_chr & 0x03);
+	    state->s0 = 0x00000080L | (input_chr & 0x03);
 	} else if (input_chr >= 0xFC && input_chr < 0xFE) {
-	    state->s0 = 0xc4000000L | (input_chr & 0x01);
+	    state->s0 = 0x00000002L | (input_chr & 0x01);
 	}
     }
 }
