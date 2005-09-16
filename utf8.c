@@ -297,8 +297,10 @@ void utf8_write_test(int line, const long *input, int inlen, ...)
     state.s0 = 0;
     p = str;
 
-    for (i = 0; i < inlen; i++)
-	write_utf8(NULL, input[i], &state, utf8_emit, &p);
+    for (i = 0; i < inlen; i++) {
+	if (!write_utf8(NULL, input[i], &state, utf8_emit, &p))
+            utf8_emit(&p, ERROR);
+    }
 
     va_start(ap, inlen);
     l = 0;
