@@ -87,16 +87,18 @@ enum {
     SS3CHAR,	/* Accumulating a character after SS3 */
     ESCSEQ,	/* Accumulating an escape sequence */
     ESCDROP,	/* Discarding an escape sequence */
-    ESCPASS	/* Passing through an escape sequence */
+    ESCPASS,	/* Passing through an escape sequence */
+    DOCSUTF8	/* DOCSed into UTF-8 */
 };
 
-#if 0
+#if 1
 #include <stdio.h>
 static void dump_state(charset_state *s)
 {
     unsigned s0 = s->s0, s1 = s->s1;
     char const * const modes[] = { "IDLE", "SS2CHAR", "SS3CHAR",
-				   "ESCSEQ", "ESCDROP", "ESCPASS" };
+				   "ESCSEQ", "ESCDROP", "ESCPASS",
+				   "DOCSUTF8" };
 
     fprintf(stderr, "s0: %s", modes[s0 >> 29]);
     fprintf(stderr, " %02x %02x %02x   ", (s0 >> 16) & 0xff, (s0 >> 8) & 0xff,
@@ -131,13 +133,62 @@ static void designate(charset_state *state, int container,
     designate(state, container, type, 0, '~');
 }
 
+static void do_utf8(long int input_chr,
+		    charset_state *state,
+		    void (*emit)(void *ctx, long int output),
+		    void *emitctx)
+{
+    charset_state ustate;
+    charset_spec const *utf8;
+
+    ustate.s1 = 0;
+    ustate.s0 = state->s0 & 0x03ffffffL;
+    utf8 = charset_find_spec(CS_UTF8);
+    utf8->read(utf8, input_chr, &ustate, emit, emitctx);
+    state->s0 = (state->s0 & ~0x03ffffffL) | (ustate.s0 & 0x03ffffffL);
+}
+
+static void docs_utf8(long int input_chr,
+		      charset_state *state,
+		      void (*emit)(void *ctx, long int output),
+		      void *emitctx)
+{
+    int retstate;
+
+    /*
+     * Bits [25:0] of s0 are reserved for read_utf8().
+     * Bits [27:26] are a tiny state machine to recognise ESC % @.
+     */
+    retstate = (state->s0 & 0x0c000000L) >> 26;
+    if (retstate == 1 && input_chr == '%')
+	retstate = 2;
+    else if (retstate == 2 && input_chr == '@') {
+	/* If we've got a partial UTF-8 sequence, complain. */
+	if (state->s0 & 0x03ffffffL)
+	    emit(emitctx, ERROR);
+	state->s0 = 0;
+	return;
+    } else {
+	if (retstate >= 1) do_utf8(ESC, state, emit, emitctx);
+	if (retstate >= 2) do_utf8('%', state, emit, emitctx);
+	retstate = 0;
+	if (input_chr == ESC)
+	    retstate = 1;
+	else {
+	    do_utf8(input_chr, state, emit, emitctx);
+	}
+    }
+    state->s0 = (state->s0 & ~0x0c000000L) | (retstate << 26);
+}
+
+
 static void read_iso2022(charset_spec const *charset, long int input_chr,
 			  charset_state *state,
 			  void (*emit)(void *ctx, long int output),
 			  void *emitctx)
 {
 
-/*    dump_state(state); */
+    /* dump_state(state); */
     /*
      * We've got 64 bits of state to play with.
      *
@@ -181,6 +232,11 @@ static void read_iso2022(charset_spec const *charset, long int input_chr,
 	designate(state, 1, S4, 0, 'B');
 	designate(state, 2, S4, 0, 'B');
 	designate(state, 3, S4, 0, 'B');
+    }
+
+    if (MODE == DOCSUTF8) {
+	docs_utf8(input_chr, state, emit, emitctx);
+	return;
     }
 
     if ((input_chr & 0x60) == 0x00) {
@@ -388,7 +444,16 @@ static void read_iso2022(charset_spec const *charset, long int input_chr,
 		break;
 	    }
 	  case '%': /* DOCS */
-	    /* FIXME */
+	    /* XXX What's a reasonable way to handle an unrecognised DOCS? */
+	    switch (i2) {
+	      case 0:
+		switch (input_chr) {
+		  case 'G':
+		    ENTER_MODE(DOCSUTF8);
+		    break;
+		}
+		break;
+	    }
 	    break;
 	  default:
 	    /* Unsupported nF escape sequence.  Re-emit it. */
@@ -520,6 +585,15 @@ int main(void)
     iso2022_read_test(TESTSTR("\x1b$-~\x1b~\xa0\xff"), ERROR, 0, -1);
     /* Designate control sets */
     iso2022_read_test(TESTSTR("\x1b!@"), 0x1b, '!', '@', 0, -1);
+    /* Designate other coding system */
+    iso2022_read_test(TESTSTR("\x1b%G"
+			      "\xCE\xBA\xE1\xBD\xB9\xCF\x83\xCE\xBC\xCE\xB5"),
+		      0x03BA, 0x1F79, 0x03C3, 0x03BC, 0x03B5, 0, -1);
+    iso2022_read_test(TESTSTR("\x1b-A\x1b%G\xCE\xBA\x1b%@\xa0"),
+		      0x03BA, 0xA0, 0, -1);
+    iso2022_read_test(TESTSTR("\x1b%G\xCE\x1b%@"), ERROR, 0, -1);
+    iso2022_read_test(TESTSTR("\x1b%G\xCE\xBA\x1b%\x1b%@"),
+		      0x03BA, 0x1B, '%', 0, -1);
     printf("read tests completed\n");
     printf("total: %d errors\n", total_errs);
     return (total_errs != 0);
