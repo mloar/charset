@@ -40,7 +40,7 @@ static const struct {
     { "fcd8859-15", CS_ISO8859_15 },
     { "hp-roman8", CS_HP_ROMAN8 },
     { "koi8-r", CS_KOI8_R },
-    { "jisx0201.1976-0, CS_JISX0201 },
+    { "jisx0201.1976-0", CS_JISX0201 },
     /*
      * Unofficial encoding names found in the wild.
      */
