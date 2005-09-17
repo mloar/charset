@@ -132,6 +132,8 @@ static const struct {
     { "csISOLatin6", CS_ISO8859_10 },
     { "latin6", CS_ISO8859_10 },
 
+    { "TIS-620", CS_ISO8859_11 },
+
     { "ISO-8859-13", CS_ISO8859_13 },
     { "ISO8859-13", CS_ISO8859_13 },   /* WILD */
 
