@@ -23,6 +23,7 @@ static const struct {
      * canonical and will be returned when translating the id to a
      * string.
      */
+    { "iso646.1991-irv", CS_ASCII },
     { "iso8859-1", CS_ISO8859_1 },
     { "iso8859-2", CS_ISO8859_2 },
     { "iso8859-3", CS_ISO8859_3 },
@@ -39,6 +40,7 @@ static const struct {
     { "fcd8859-15", CS_ISO8859_15 },
     { "hp-roman8", CS_HP_ROMAN8 },
     { "koi8-r", CS_KOI8_R },
+    { "jisx0201.1976-0, CS_JISX0201 },
     /*
      * Unofficial encoding names found in the wild.
      */
