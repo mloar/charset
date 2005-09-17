@@ -86,6 +86,9 @@ typedef enum {
     CS_CP949,
     CS_PDF,
     CS_CTEXT,
+    CS_BS4730,
+    CS_DEC_GRAPHICS,
+    CS_ISO2022
 } charset_t;
 
 typedef struct {

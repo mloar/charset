@@ -1,9 +1,5 @@
 /*
  * iso2022s.c - support for ISO-2022 subset encodings.
- * 
- * (The `s' suffix on the filename is there to leave `iso2022.c'
- * free for the unlikely event that I ever attempt to implement
- * _full_ ISO-2022 in this library!)
  */
 
 #ifndef ENUM_CHARSETS

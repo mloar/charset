@@ -115,6 +115,8 @@ static const struct {
     { "COMPOUND TEXT", CS_CTEXT, 0 },
     { "COMPOUNDTEXT", CS_CTEXT, 0 },
     { "CTEXT", CS_CTEXT, 0 },
+    { "ISO-2022", CS_ISO2022, 1 },
+    { "ISO2022", CS_ISO2022, 0 },
 };
 
 const char *charset_to_localenc(int charset)

@@ -194,7 +194,7 @@ static int write_utf16(charset_spec const *charset, long int input_chr,
     return TRUE;
 }
 
-static const struct utf16 utf16_bigendian = { 0x20000 };
+static struct utf16 const utf16_bigendian = { 0x20000 };
 static const struct utf16 utf16_littleendian = { 0x10000 };
 static const struct utf16 utf16_variable_endianness = { 0x30000 };
 

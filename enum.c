@@ -19,6 +19,7 @@
 #include "utf7.c"
 #include "utf16.c"
 #include "euc.c"
+#include "iso2022.c"
 #include "iso2022s.c"
 #include "big5enc.c"
 #include "shiftjis.c"
