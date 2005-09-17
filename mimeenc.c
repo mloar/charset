@@ -252,10 +252,8 @@ static const struct {
 
     { "Big5", CS_BIG5 },
     { "csBig5", CS_BIG5 },
-    /* The following two names are not listed on the above web page, but
-     * I've seen them in the wild in real e-mail. */
-    { "Big-5", CS_BIG5 },
-    { "ChineseBig5", CS_BIG5 },
+    { "Big-5", CS_BIG5 },	       /* WILD */
+    { "ChineseBig5", CS_BIG5 },	       /* WILD */
 
     { "Shift_JIS", CS_SHIFT_JIS },
     { "MS_Kanji", CS_SHIFT_JIS },
