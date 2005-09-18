@@ -190,14 +190,16 @@ static void read_iso2022(charset_spec const *charset, long int input_chr,
 
     /* dump_state(state); */
     /*
-     * We've got 64 bits of state to play with.
-     *
-     * Locking-shift state: 2 bits each GL/GR
-     * Single-shift state: 2 bits
-     * Charset designation state: n bits each G0/G1/G2/G3
-     * MBCS/esc seq accumulation: 14 bits (assume max 4-byte sets)
-     * MBCS state: 2 bits (off, ESC, GL, GR)
-     * For no good reason, put long-term state in s1, short term in s0.
+     * We have to make fairly efficient use of the 64 bits of state
+     * available to us.  Long-term state goes in s0, and consists of
+     * the identities of the character sets designated as G0/G1/G2/G3
+     * and the locking-shift states for GL and GR.  Short-term state
+     * goes in s1: The bottom half of s1 accumulates characters for an
+     * escape sequence or a multi-byte character, while the top three
+     * bits indicate what they're being accumulated for.  After DOCS,
+     * the bottom 29 bits of state are available for the DOCS function
+     * to use -- the UTF-8 one uses the bottom 26 for UTF-8 decoding
+     * and the top two to recognised ESC % @.
      *
      * s0[31:29] = state enum
      * s0[24:0] = accumulated bytes
@@ -466,8 +468,16 @@ static void read_iso2022(charset_spec const *charset, long int input_chr,
     }
 }
 
+static int write_iso2022(charset_spec const *charset, long int input_chr,
+			 charset_state *state,
+			 void (*emit)(void *ctx, long int output),
+			 void *emitctx)
+{
+    return FALSE;
+}
+
 const charset_spec charset_CS_ISO2022 = {
-    CS_ISO2022, read_iso2022, NULL, NULL
+    CS_ISO2022, read_iso2022, write_iso2022, NULL
 };
 
 #ifdef TESTMODE
