@@ -43,9 +43,10 @@ const struct iso2022_subcharset {
     const sbcs_data *sbcs_base;
     long int (*dbcs_fn)(int, int);
 } iso2022_subcharsets[] = {
-    { S4, 0, 'B', 0x00, &sbcsdata_CS_ASCII },
-
+    { S4, 0, '0', 0x00, &sbcsdata_CS_DEC_GRAPHICS },
     { S4, 0, '<', 0x80, &sbcsdata_CS_DEC_MCS },
+    { S4, 0, 'A', 0x00, &sbcsdata_CS_BS4730 },
+    { S4, 0, 'B', 0x00, &sbcsdata_CS_ASCII },
     { S4, 0, 'I', 0x80, &sbcsdata_CS_JISX0201 },
     { S4, 0, 'J', 0x00, &sbcsdata_CS_JISX0201 },
     { S4, 0, '~' },

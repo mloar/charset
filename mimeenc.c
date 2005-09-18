@@ -40,6 +40,13 @@ static const struct {
     { "csASCII", CS_ASCII },
     { "646", CS_ASCII },	       /* WILD */
 
+    { "BS_4730", CS_BS4730 },
+    { "iso-ir-4", CS_BS4730 },
+    { "ISO646-GB", CS_BS4730 },
+    { "gb", CS_BS4730 },
+    { "uk", CS_BS4730 },
+    { "csISO4UnitedKingdom", CS_BS4730 },
+
     { "ISO-8859-1", CS_ISO8859_1 },
     { "ISO8859-1", CS_ISO8859_1 },     /* WILD */
     { "iso-ir-100", CS_ISO8859_1 },
