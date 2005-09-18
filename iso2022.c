@@ -15,7 +15,8 @@
  * sets are passed through, so a post-processor could fix them up if
  * necessary.
  *
- * DOCS is not currently supported.  It will be one day.
+ * DOCS to UTF-8 works.  Other DOCS sequences are ignored, which will
+ * produce surprising results.
  */
 
 #ifndef ENUM_CHARSETS
