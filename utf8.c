@@ -11,9 +11,9 @@
  * UTF-8 has no associated data, so `charset' may be ignored.
  */
 
-static void read_utf8(charset_spec const *charset, long int input_chr,
-		      charset_state *state,
-		      void (*emit)(void *ctx, long int output), void *emitctx)
+void read_utf8(charset_spec const *charset, long int input_chr,
+	       charset_state *state,
+	       void (*emit)(void *ctx, long int output), void *emitctx)
 {
     UNUSEDARG(charset);
 

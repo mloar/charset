@@ -144,8 +144,7 @@ static void do_utf8(long int input_chr,
 
     ustate.s1 = 0;
     ustate.s0 = state->s0 & 0x03ffffffL;
-    utf8 = charset_find_spec(CS_UTF8);
-    utf8->read(utf8, input_chr, &ustate, emit, emitctx);
+    read_utf8(NULL, input_chr, &ustate, emit, emitctx);
     state->s0 = (state->s0 & ~0x03ffffffL) | (ustate.s0 & 0x03ffffffL);
 }
 
