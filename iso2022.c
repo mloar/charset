@@ -191,10 +191,10 @@ static void read_iso2022(charset_spec const *charset, long int input_chr,
     /* dump_state(state); */
     /*
      * We have to make fairly efficient use of the 64 bits of state
-     * available to us.  Long-term state goes in s0, and consists of
+     * available to us.  Long-term state goes in s1, and consists of
      * the identities of the character sets designated as G0/G1/G2/G3
      * and the locking-shift states for GL and GR.  Short-term state
-     * goes in s1: The bottom half of s1 accumulates characters for an
+     * goes in s0: The bottom half of s0 accumulates characters for an
      * escape sequence or a multi-byte character, while the top three
      * bits indicate what they're being accumulated for.  After DOCS,
      * the bottom 29 bits of state are available for the DOCS function
