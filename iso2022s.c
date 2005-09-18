@@ -446,12 +446,13 @@ static int write_iso2022s(charset_spec const *charset, long int input_chr,
 static long int iso2022jp_to_ucs(int subcharset, unsigned long bytes)
 {
     switch (subcharset) {
+      case 1:			       /* JIS X 0201 bottom half */
+	if (bytes == 0x5C)
+	    return 0xA5;
+	else if (bytes == 0x7E)
+	    return 0x203E;
+	/* else fall through to ASCII */
       case 0: return bytes;	       /* one-byte ASCII */
-      case 1:			       /* JIS X 0201 half-width katakana */
-	if (bytes >= 0x21 && bytes <= 0x5F)
-	    return bytes + (0xFF61 - 0x21);
-	else
-	    return ERROR;
 	/* (no break needed since all control paths have returned) */
       case 2: return jisx0208_to_unicode(((bytes >> 8) & 0xFF) - 0x21,
 					 ((bytes     ) & 0xFF) - 0x21);
@@ -466,9 +467,9 @@ static int iso2022jp_from_ucs(long int ucs, int *subcharset,
 	*subcharset = 0;
 	*bytes = ucs;
 	return 1;
-    } else if (ucs >= 0xFF61 && ucs <= 0xFF9F) {
+    } else if (ucs == 0xA5 || ucs == 0x203E) {
 	*subcharset = 1;
-	*bytes = ucs - (0xFF61 - 0x21);
+	*bytes = (ucs == 0xA5 ? 0x5C : 0x7E);
 	return 1;
     } else if (unicode_to_jisx0208(ucs, &r, &c)) {
 	*subcharset = 2;
