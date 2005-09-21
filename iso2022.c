@@ -90,7 +90,8 @@ enum {
     ESCSEQ,	/* Accumulating an escape sequence */
     ESCDROP,	/* Discarding an escape sequence */
     ESCPASS,	/* Passing through an escape sequence */
-    DOCSUTF8	/* DOCSed into UTF-8 */
+    DOCSUTF8,	/* DOCSed into UTF-8 */
+    DOCSCTEXT	/* DOCSed into a COMPOUND_TEXT extended segment */
 };
 
 #if 1
@@ -182,6 +183,110 @@ static void docs_utf8(long int input_chr,
     state->s0 = (state->s0 & ~0x0c000000L) | (retstate << 26);
 }
 
+struct ctext_encoding {
+    char const *name;
+    charset_spec const *subcs;
+};
+
+/*
+ * In theory, this list is in <http://ftp.x.org/pub/docs/registry>,
+ * but XLib appears to have its own ideas, and encodes these three
+ * (as of X11R6.8.2)
+ */
+
+extern charset_spec const charset_CS_ISO8859_14;
+extern charset_spec const charset_CS_ISO8859_15;
+extern charset_spec const charset_CS_BIG5;
+
+static struct ctext_encoding const ctext_encodings[] = {
+    { "big5-0\2", &charset_CS_BIG5 },
+    { "iso8859-14\2", &charset_CS_ISO8859_14 },
+    { "iso8859-15\2", &charset_CS_ISO8859_15 }
+};
+
+static void docs_ctext(long int input_chr,
+		       charset_state *state,
+		       void (*emit)(void *ctx, long int output),
+		       void *emitctx)
+{
+    /*
+     * s0[27:26] = first entry in ctext_encodings that matches
+     * s0[25:22] = number of characters successfully matched, 0xf if all
+     * s0[21:8] count the number of octets left in the segment
+     * s0[7:0] are for sub-charset use
+     */
+    int n = (state->s0 >> 22) & 0xf, i = (state->s0 >> 26) & 3, oi = i, j;
+    int length = (state->s0 >> 8) & 0x3fff;
+
+    if (!length) {
+	/* Haven't read length yet */
+	if ((state->s0 & 0xff) == 0)
+	    /* ... or even the first byte */
+	    state->s0 |= input_chr;
+	else {
+	    length = (state->s0 & 0x7f) * 0x80 + (input_chr & 0x7f);
+	    if (length == 0)
+		state->s0 = 0;
+	    else
+		state->s0 = (state->s0 & 0xf0000000) | (length << 8);
+	}
+	return;
+    }
+
+    j = i;
+    if (n == 0xe) {
+	/* Skipping unknown encoding.  Look out for STX. */
+	if (input_chr == 2)
+	    state->s0 = (state->s0 & 0xf0000000) | (i << 26) | (0xf << 22);
+    } else if (n != 0xf) {
+	while (j < lenof(ctext_encodings) &&
+	       !memcmp(ctext_encodings[j].name,
+		       ctext_encodings[oi].name, n)) {
+	    if (ctext_encodings[j].name[n] < input_chr)
+		i = ++j;
+	    else
+		break;
+	}
+	if (i >= lenof(ctext_encodings) ||
+	    memcmp(ctext_encodings[i].name,
+		   ctext_encodings[oi].name, n) ||
+	    ctext_encodings[i].name[n] != input_chr) {
+	    /* Doom!  We haven't heard of this encoding */
+	    i = lenof(ctext_encodings);
+	    n = 0xe;
+	} else {
+	    /*
+	     * Otherwise, we have found an additional character in our
+	     * encoding name. See if we have reached the _end_ of our
+	     * name.
+	     */
+	    n++;
+	    if (!ctext_encodings[i].name[n])
+		n = 0xf;
+	}
+	/*
+	 * Failing _that_, we simply update our encoding-name-
+	 * tracking state.
+	 */
+	assert(i < 4 && n < 16);
+	state->s0 = (state->s0 & 0xf0000000) | (i << 26) | (n << 22);
+    } else {
+	if (i >= lenof(ctext_encodings))
+	    emit(emitctx, ERROR);
+	else {
+	    charset_state substate;
+	    charset_spec const *subcs = ctext_encodings[i].subcs;
+	    substate.s1 = 0;
+	    substate.s0 = state->s0 & 0xff;
+	    subcs->read(subcs, input_chr, &substate, emit, emitctx);
+	    state->s0 = (state->s0 & ~0xff) | (substate.s0 & 0xff);
+	}
+    }
+    if (!--length)
+	state->s0 = 0;
+    else
+	state->s0 = (state->s0 &~0x003fff00) | (length << 8);
+}
 
 static void read_iso2022(charset_spec const *charset, long int input_chr,
 			  charset_state *state,
@@ -239,6 +344,10 @@ static void read_iso2022(charset_spec const *charset, long int input_chr,
 
     if (MODE == DOCSUTF8) {
 	docs_utf8(input_chr, state, emit, emitctx);
+	return;
+    }
+    if (MODE == DOCSCTEXT) {
+	docs_ctext(input_chr, state, emit, emitctx);
 	return;
     }
 
@@ -456,6 +565,13 @@ static void read_iso2022(charset_spec const *charset, long int input_chr,
 		    break;
 		}
 		break;
+	      case '/':
+		switch (input_chr) {
+		  case '1': case '2':
+		    ENTER_MODE(DOCSCTEXT);
+		    break;
+		}
+		break;
 	    }
 	    break;
 	  default:
@@ -596,7 +712,7 @@ int main(void)
     iso2022_read_test(TESTSTR("\x1b$-~\x1b~\xa0\xff"), ERROR, 0, -1);
     /* Designate control sets */
     iso2022_read_test(TESTSTR("\x1b!@"), 0x1b, '!', '@', 0, -1);
-    /* Designate other coding system */
+    /* Designate other coding system (UTF-8) */
     iso2022_read_test(TESTSTR("\x1b%G"
 			      "\xCE\xBA\xE1\xBD\xB9\xCF\x83\xCE\xBC\xCE\xB5"),
 		      0x03BA, 0x1F79, 0x03C3, 0x03BC, 0x03B5, 0, -1);
@@ -605,6 +721,15 @@ int main(void)
     iso2022_read_test(TESTSTR("\x1b%G\xCE\x1b%@"), ERROR, 0, -1);
     iso2022_read_test(TESTSTR("\x1b%G\xCE\xBA\x1b%\x1b%@"),
 		      0x03BA, 0x1B, '%', 0, -1);
+    /* DOCS (COMPOUND_TEXT extended segment) */
+    iso2022_read_test(TESTSTR("\x1b%/1\x80\x80"), 0, -1);
+    iso2022_read_test(TESTSTR("\x1b%/1\x80\x8fiso-8859-15\2xyz\x1b(B"),
+		      ERROR, ERROR, ERROR, 0, -1);
+    iso2022_read_test(TESTSTR("\x1b%/1\x80\x8eiso8859-15\2xyz\x1b(B"),
+		      'x', 'y', 'z', 0, -1);
+    iso2022_read_test(TESTSTR("\x1b-A\x1b%/2\x80\x89"
+			      "big5-0\2\xa1\x40\xa1\x40"),
+		      0x3000, 0xa1, 0x40, 0, -1);
     printf("read tests completed\n");
     printf("total: %d errors\n", total_errs);
     return (total_errs != 0);
