@@ -35,6 +35,8 @@
 
 enum {S4, S6, M4, M6};
 
+static long int emacs_big5_1_to_unicode(int, int);
+static long int emacs_big5_2_to_unicode(int, int);
 static long int null_dbcs_to_unicode(int, int);
 
 const struct iso2022_subcharset {
@@ -69,6 +71,8 @@ const struct iso2022_subcharset {
 #if 0
     { M4, 0, '@' }, /* JIS C 6226-1978 */
 #endif
+    { M4, 0, '0', -0x21, 0, &emacs_big5_1_to_unicode },
+    { M4, 0, '1', -0x21, 0, &emacs_big5_2_to_unicode },
     { M4, 0, 'A', -0x21, 0, &gb2312_to_unicode },
     { M4, 0, 'B', -0x21, 0, &jisx0208_to_unicode },
     { M4, 0, 'C', -0x21, 0, &ksx1001_to_unicode },
@@ -81,6 +85,34 @@ static long int null_dbcs_to_unicode(int r, int c)
 {
     return ERROR;
 }
+
+/*
+ * Emacs encodes Big5 in COMPOUND_TEXT as two 94x94 character sets.
+ * We treat Big5 as a 94x191 character set with a bunch of undefined
+ * columns in the middle, so we have to mess around a bit to make
+ * things fit.
+ */
+
+static long int emacs_big5_1_to_unicode(int r, int c)
+{
+    unsigned long s;
+    s = r * 94 + c;
+    r = s / 157;
+    c = s % 157;
+    if (c >= 64) c += 34; /* Skip over the gap */
+    return big5_to_unicode(r, c);
+}
+
+static long int emacs_big5_2_to_unicode(int r, int c)
+{
+    unsigned long s;
+    s = r * 94 + c;
+    r = s / 157 + 40;
+    c = s % 157;
+    if (c >= 64) c += 34; /* Skip over the gap */
+    return big5_to_unicode(r, c);
+}
+
 
 /* States, or "what we're currently accumulating". */
 enum {
@@ -730,6 +762,9 @@ int main(void)
     iso2022_read_test(TESTSTR("\x1b-A\x1b%/2\x80\x89"
 			      "big5-0\2\xa1\x40\xa1\x40"),
 		      0x3000, 0xa1, 0x40, 0, -1);
+    /* Emacs Big5-in-ISO-2022 mapping */
+    iso2022_read_test(TESTSTR("\x1b$(0&x86\x1b(B  \x1b$(0DeBv"),
+		      0x5143, 0x6c23, ' ', ' ', 0x958b, 0x767c, 0, -1);
     printf("read tests completed\n");
     printf("total: %d errors\n", total_errs);
     return (total_errs != 0);
