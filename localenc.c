@@ -104,6 +104,7 @@ static const struct {
     { "EUC-CN", CS_EUC_CN, 1 },
     { "EUC-KR", CS_EUC_KR, 1 },
     { "EUC-JP", CS_EUC_JP, 1 },
+    { "EUC-JP", CS_EUC_TW, 1 },
     { "ISO-2022-JP", CS_ISO2022_JP, 1 },
     { "ISO-2022-KR", CS_ISO2022_KR, 1 },
     { "Big5", CS_BIG5, 1 },

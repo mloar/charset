@@ -88,7 +88,8 @@ typedef enum {
     CS_CTEXT,
     CS_ISO2022,
     CS_BS4730,
-    CS_DEC_GRAPHICS
+    CS_DEC_GRAPHICS,
+    CS_EUC_TW
 } charset_t;
 
 typedef struct {

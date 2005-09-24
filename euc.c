@@ -226,10 +226,47 @@ const charset_spec charset_CS_EUC_JP = {
     CS_EUC_JP, read_euc, write_euc, &euc_jp
 };
 
+/*
+ * EUC-TW encodes CNS 11643 (all planes).
+ */
+static long int euc_tw_to_ucs(unsigned long state)
+{
+    int plane;
+    switch (state >> 28) {
+      case 1: return cns11643_to_unicode(0, ((state >> 8) & 0xFF) - 0xA1,
+					    ((state     ) & 0xFF) - 0xA1);
+      case 2:
+	plane = ((state >> 8) & 0xFF) - 0xA1;
+	if (plane >= 7) return ERROR;
+	return cns11643_to_unicode(plane, ((state >> 8) & 0xFF) - 0xA1,
+					  ((state     ) & 0xFF) - 0xA1);
+      default: return ERROR;
+    }
+}
+static unsigned long euc_tw_from_ucs(long int ucs)
+{
+    int p, r, c;
+    if (unicode_to_cns11643(ucs, &p, &r, &c)) {
+	if (p == 0)
+	    return 0x10000000 | ((r+0xA1) << 8) | (c+0xA1);
+	else
+	    return 0x20000000 |
+		((p + 0xA1) << 16) | ((r+0xA1) << 8) | (c+0xA1);
+    } else
+	return 0;
+}
+static const struct euc euc_tw = {
+    {2,3,0}, euc_tw_to_ucs, euc_tw_from_ucs
+};
+const charset_spec charset_CS_EUC_TW = {
+    CS_EUC_TW, read_euc, write_euc, &euc_tw
+};
+
 #else /* ENUM_CHARSETS */
 
 ENUM_CHARSET(CS_EUC_CN)
 ENUM_CHARSET(CS_EUC_KR)
 ENUM_CHARSET(CS_EUC_JP)
+ENUM_CHARSET(CS_EUC_TW)
 
 #endif /* ENUM_CHARSETS */

@@ -25,8 +25,10 @@ not currently support. Those that I know of are:
    machinery in place, and support all the underlying character
    sets.
 
- - ISO-2022-CN and ISO-2022-CN-EXT (RFC 1922), and EUC-TW. These
-   encodings depend on the CNS 11643-1992 character set.
+ - ISO-2022-CN and ISO-2022-CN-EXT (RFC 1922). These are a little tricky
+   as they allow use of both GB2312 (simplified Chinese) and CNS 11643
+   (traditional Chinese), so we may need some way to specify which to
+   prefer.
 
  - The Hong Kong (HKSCS) extension to Big5. Again, mapping tables
    are available in the Unihan database.
