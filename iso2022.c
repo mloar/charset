@@ -37,6 +37,13 @@ enum {S4, S6, M4, M6};
 
 static long int emacs_big5_1_to_unicode(int, int);
 static long int emacs_big5_2_to_unicode(int, int);
+static long int cns11643_1_to_unicode(int, int);
+static long int cns11643_2_to_unicode(int, int);
+static long int cns11643_3_to_unicode(int, int);
+static long int cns11643_4_to_unicode(int, int);
+static long int cns11643_5_to_unicode(int, int);
+static long int cns11643_6_to_unicode(int, int);
+static long int cns11643_7_to_unicode(int, int);
 static long int null_dbcs_to_unicode(int, int);
 
 const struct iso2022_subcharset {
@@ -77,6 +84,13 @@ const struct iso2022_subcharset {
     { M4, 0, 'B', -0x21, 0, &jisx0208_to_unicode },
     { M4, 0, 'C', -0x21, 0, &ksx1001_to_unicode },
     { M4, 0, 'D', -0x21, 0, &jisx0212_to_unicode },
+    { M4, 0, 'G', -0x21, 0, &cns11643_1_to_unicode },
+    { M4, 0, 'H', -0x21, 0, &cns11643_2_to_unicode },
+    { M4, 0, 'I', -0x21, 0, &cns11643_3_to_unicode },
+    { M4, 0, 'J', -0x21, 0, &cns11643_4_to_unicode },
+    { M4, 0, 'K', -0x21, 0, &cns11643_5_to_unicode },
+    { M4, 0, 'L', -0x21, 0, &cns11643_6_to_unicode },
+    { M4, 0, 'M', -0x21, 0, &cns11643_7_to_unicode },
     { M4, 0, '~', 0, 0, &null_dbcs_to_unicode }, /* empty 94^n-set */
     { M6, 0, '~', 0, 0, &null_dbcs_to_unicode }, /* empty 96^n-set */
 };
@@ -113,6 +127,35 @@ static long int emacs_big5_2_to_unicode(int r, int c)
     return big5_to_unicode(r, c);
 }
 
+/* Wrappers for cns11643_to_unicode() */
+static long int cns11643_1_to_unicode(int r, int c)
+{
+    return cns11643_to_unicode(0, r, c);
+}
+static long int cns11643_2_to_unicode(int r, int c)
+{
+    return cns11643_to_unicode(1, r, c);
+}
+static long int cns11643_3_to_unicode(int r, int c)
+{
+    return cns11643_to_unicode(2, r, c);
+}
+static long int cns11643_4_to_unicode(int r, int c)
+{
+    return cns11643_to_unicode(3, r, c);
+}
+static long int cns11643_5_to_unicode(int r, int c)
+{
+    return cns11643_to_unicode(4, r, c);
+}
+static long int cns11643_6_to_unicode(int r, int c)
+{
+    return cns11643_to_unicode(5, r, c);
+}
+static long int cns11643_7_to_unicode(int r, int c)
+{
+    return cns11643_to_unicode(6, r, c);
+}
 
 /* States, or "what we're currently accumulating". */
 enum {
@@ -765,6 +808,10 @@ int main(void)
     /* Emacs Big5-in-ISO-2022 mapping */
     iso2022_read_test(TESTSTR("\x1b$(0&x86\x1b(B  \x1b$(0DeBv"),
 		      0x5143, 0x6c23, ' ', ' ', 0x958b, 0x767c, 0, -1);
+    /* Test from RFC 1922 (ISO-2022-CN) */
+    iso2022_read_test(TESTSTR("\x1b$)A\x0e=;;;\x1b$)GG(_P\x0f"),
+		      0x4EA4, 0x6362, 0x4EA4, 0x63db, 0, -1);
+    
     printf("read tests completed\n");
     printf("total: %d errors\n", total_errs);
     return (total_errs != 0);
