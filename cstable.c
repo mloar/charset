@@ -24,8 +24,8 @@ int main(void)
 {
     long int c;
 
-    for (c = 0; c < 0x10000; c++) {
-	int i, row, col;
+    for (c = 0; c < 0x30000; c++) {
+	int i, plane, row, col;
 	char const *sep = "";
 
 	printf("U+%04x:", c);
@@ -65,6 +65,11 @@ int main(void)
 
 	if (unicode_to_cp949(c, &row, &col)) {
 	    printf("%s CP949", sep);
+	    sep = ";";
+	}
+
+	if (unicode_to_cns11643(c, &plane, &row, &col)) {
+	    printf("%s CNS11643", sep);
 	    sep = ";";
 	}
 
