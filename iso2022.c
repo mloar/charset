@@ -169,7 +169,7 @@ enum {
     DOCSCTEXT	/* DOCSed into a COMPOUND_TEXT extended segment */
 };
 
-#if 1
+#if 0
 #include <stdio.h>
 static void dump_state(charset_state *s)
 {
@@ -217,7 +217,6 @@ static void do_utf8(long int input_chr,
 		    void *emitctx)
 {
     charset_state ustate;
-    charset_spec const *utf8;
 
     ustate.s1 = 0;
     ustate.s0 = state->s0 & 0x03ffffffL;
