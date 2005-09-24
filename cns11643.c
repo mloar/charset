@@ -15784,7 +15784,7 @@ int main(void)
 	}
     }
 
-    for (u = 0; u < 0x10000L; u++) {
+    for (u = 0; u < 0x30000L; u++) {
 	ret = unicode_to_cns11643(u, &p, &r, &c);
 	if (ret) {
 	    uu = cns11643_to_unicode(p, r, c);
