@@ -26,10 +26,7 @@ not currently support. Those that I know of are:
    sets.
 
  - ISO-2022-CN and ISO-2022-CN-EXT (RFC 1922), and EUC-TW. These
-   encodings depend on the CNS 11643-1992 character set. Mapping
-   table data for this set is available from unicode.org, but only
-   in the Unihan database
-   ftp://ftp.unicode.org/Public/UNIDATA/Unihan.zip
+   encodings depend on the CNS 11643-1992 character set.
 
  - The Hong Kong (HKSCS) extension to Big5. Again, mapping tables
    are available in the Unihan database.

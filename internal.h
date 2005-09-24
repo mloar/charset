@@ -100,6 +100,8 @@ void read_utf8(charset_spec const *charset, long int input_chr,
 
 long int big5_to_unicode(int r, int c);
 int unicode_to_big5(long int unicode, int *r, int *c);
+long int cns11643_to_unicode(int p, int r, int c);
+int unicode_to_cns11643(long int unicode, int *p, int *r, int *c);
 long int cp949_to_unicode(int r, int c);
 int unicode_to_cp949(long int unicode, int *r, int *c);
 long int ksx1001_to_unicode(int r, int c);
