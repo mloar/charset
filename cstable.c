@@ -20,12 +20,16 @@ static charset_spec const *const cs_table[] = {
 #undef ENUM_CHARSET
 };
 
-int main(void)
+int main(int argc, char **argv)
 {
     long int c;
+    int verbose = FALSE;
+
+    if (argc > 1 && !strcmp(argv[1], "-v"))
+	verbose = TRUE;
 
     for (c = 0; c < 0x30000; c++) {
-	int i, plane, row, col;
+	int i, plane, row, col, chr;
 	char const *sep = "";
 
 	printf("U+%04x:", c);
@@ -35,9 +39,11 @@ int main(void)
 	 */
 	for (i = 0; i < lenof(cs_table); i++)
 	    if (cs_table[i]->read == read_sbcs &&
-		sbcs_from_unicode(cs_table[i]->data, c) != ERROR) {
+		(chr = sbcs_from_unicode(cs_table[i]->data, c)) != ERROR) {
 		printf("%s %s", sep,
 		       charset_to_localenc(cs_table[i]->charset));
+		if (verbose)
+		    printf("[%d]", chr);
 		sep = ";";
 	    }
 
@@ -46,30 +52,42 @@ int main(void)
 	 */
 	if (unicode_to_big5(c, &row, &col)) {
 	    printf("%s Big5", sep);
+	    if (verbose)
+		printf("[%d,%d]", row, col);
 	    sep = ";";
 	}
 	if (unicode_to_gb2312(c, &row, &col)) {
 	    printf("%s GB2312", sep);
+	    if (verbose)
+		printf("[%d,%d]", row, col);
 	    sep = ";";
 	}
 
 	if (unicode_to_jisx0208(c, &row, &col)) {
 	    printf("%s JIS X 0208", sep);
+	    if (verbose)
+		printf("[%d,%d]", row, col);
 	    sep = ";";
 	}
 
 	if (unicode_to_ksx1001(c, &row, &col)) {
 	    printf("%s KS X 1001", sep);
+	    if (verbose)
+		printf("[%d,%d]", row, col);
 	    sep = ";";
 	}
 
 	if (unicode_to_cp949(c, &row, &col)) {
 	    printf("%s CP949", sep);
+	    if (verbose)
+		printf("[%d,%d]", row, col);
 	    sep = ";";
 	}
 
 	if (unicode_to_cns11643(c, &plane, &row, &col)) {
 	    printf("%s CNS11643", sep);
+	    if (verbose)
+		printf("[%d,%d,%d]", plane, row, col);
 	    sep = ";";
 	}
 
