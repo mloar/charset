@@ -195,7 +195,7 @@ static void designate(charset_state *state, int container,
     assert(container >= 0 && container <= 3);
     assert(type == S4 || type == S6 || type == M4 || type == M6);
 
-    for (i = 0; i <= lenof(iso2022_subcharsets); i++) {
+    for (i = 0; i < lenof(iso2022_subcharsets); i++) {
 	if (iso2022_subcharsets[i].type == type &&
 	    iso2022_subcharsets[i].i == ibyte &&
 	    iso2022_subcharsets[i].f == fbyte) {
