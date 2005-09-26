@@ -263,7 +263,7 @@ struct ctext_encoding {
 };
 
 /*
- * In theory, this list is in <http://ftp.x.org/pub/docs/registry>,
+ * In theory, this list is in <ftp://ftp.x.org/pub/DOCS/registry>,
  * but XLib appears to have its own ideas, and encodes these three
  * (as of X11R6.8.2)
  */
