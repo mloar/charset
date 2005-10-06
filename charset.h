@@ -85,6 +85,7 @@ typedef enum {
     CS_HZ,
     CS_CP949,
     CS_PDF,
+    CS_PSSTD,
     CS_CTEXT,
     CS_ISO2022,
     CS_BS4730,

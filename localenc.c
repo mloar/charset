@@ -115,6 +115,7 @@ static const struct {
     { "UTF-16", CS_UTF16, 1 },
     { "CP949", CS_CP949, 1 },
     { "PDFDocEncoding", CS_PDF, 1 },
+    { "StandardEncoding", CS_PSSTD, 1 },
     { "COMPOUND_TEXT", CS_CTEXT, 1 },
     { "COMPOUND-TEXT", CS_CTEXT, 0 },
     { "COMPOUND TEXT", CS_CTEXT, 0 },
