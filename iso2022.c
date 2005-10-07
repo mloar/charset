@@ -37,6 +37,7 @@ enum {S4, S6, M4, M6};
 
 static long int emacs_big5_1_to_unicode(int, int);
 static long int emacs_big5_2_to_unicode(int, int);
+static int unicode_to_emacs_big5(long int, int *, int *, int *);
 static long int cns11643_1_to_unicode(int, int);
 static long int cns11643_2_to_unicode(int, int);
 static long int cns11643_3_to_unicode(int, int);
@@ -45,59 +46,134 @@ static long int cns11643_5_to_unicode(int, int);
 static long int cns11643_6_to_unicode(int, int);
 static long int cns11643_7_to_unicode(int, int);
 static long int null_dbcs_to_unicode(int, int);
+static int unicode_to_null_dbcs(long int, int *, int *);
+
+typedef int (*to_dbcs_t)(long int, int *, int *);
+typedef int (*to_dbcs_planar_t)(long int, int *, int *, int *);
+
+/* Cast between to_dbcs_planar_t and to_dbcs_t, type-checking first */
+#define DEPLANARISE(x) ( (x) == (to_dbcs_planar_t)NULL, (to_dbcs_t)(x) )
+#define REPLANARISE(x) ( (x) == (to_dbcs_t)NULL, (to_dbcs_planar_t)(x) )
+
+/*
+ * Values used in the `enable' field. Each of these identifies a
+ * class of character sets; we then have a bitmask indicating which
+ * classes are allowable in a given mode.
+ * 
+ * These values are currently only checked on output: for input,
+ * any ISO 2022 we can comprehend at all is considered acceptable.
+ */
+#define CCS 1			       /* CTEXT standard */
+#define COS 2			       /* other standard */
+#define CPU 3			       /* private use */
+#define CDC 4			       /* DOCS for CTEXT */
+#define CDU 5			       /* DOCS for UTF-8 */
+#define CNU 31			       /* never used */
+
+struct iso2022_mode {
+    int enable_mask;
+    char ltype, li, lf, rtype, ri, rf;
+};
 
 const struct iso2022_subcharset {
-    char type, i, f;
+    char type, i, f, enable;
     int offset;
     const sbcs_data *sbcs_base;
-    long int (*dbcs_fn)(int, int);
+    long int (*from_dbcs)(int, int);
+
+    /*
+     * If to_dbcs_plane < 0, then to_dbcs is used as expected.
+     * However, if to_dbcs_plane >= 0, then to_dbcs is expected to
+     * be cast to a to_dbcs_planar_t before use, and the returned
+     * plane value (the first int *) must equal to_dbcs_plane.
+     * 
+     * I'd have preferred to do this by means of a union, but you
+     * can't initialise a selected field of a union at compile
+     * time. Function pointer casts are guaranteed to work sensibly
+     * in ISO C (that is, it's undefined what happens if you call a
+     * function via the wrong type of pointer, but if you cast it
+     * back to the right type before calling it then it must work),
+     * so this is safe if ugly.
+     */
+    to_dbcs_t to_dbcs;
+    int to_dbcs_plane;		       /* use to_dbcs_planar iff >= 0 */
 } iso2022_subcharsets[] = {
-    { S4, 0, '0', 0x00, &sbcsdata_CS_DEC_GRAPHICS },
-    { S4, 0, '<', 0x80, &sbcsdata_CS_DEC_MCS },
-    { S4, 0, 'A', 0x00, &sbcsdata_CS_BS4730 },
-    { S4, 0, 'B', 0x00, &sbcsdata_CS_ASCII },
-    { S4, 0, 'I', 0x80, &sbcsdata_CS_JISX0201 },
-    { S4, 0, 'J', 0x00, &sbcsdata_CS_JISX0201 },
-    { S4, 0, '~' },
-    { S6, 0, 'A', 0x80, &sbcsdata_CS_ISO8859_1 },
-    { S6, 0, 'B', 0x80, &sbcsdata_CS_ISO8859_2 },
-    { S6, 0, 'C', 0x80, &sbcsdata_CS_ISO8859_3 },
-    { S6, 0, 'D', 0x80, &sbcsdata_CS_ISO8859_4 },
-    { S6, 0, 'F', 0x80, &sbcsdata_CS_ISO8859_7 },
-    { S6, 0, 'G', 0x80, &sbcsdata_CS_ISO8859_6 },
-    { S6, 0, 'H', 0x80, &sbcsdata_CS_ISO8859_8 },
-    { S6, 0, 'L', 0x80, &sbcsdata_CS_ISO8859_5 },
-    { S6, 0, 'M', 0x80, &sbcsdata_CS_ISO8859_9 },
-    { S6, 0, 'T', 0x80, &sbcsdata_CS_ISO8859_11 },
-    { S6, 0, 'V', 0x80, &sbcsdata_CS_ISO8859_10 },
-    { S6, 0, 'Y', 0x80, &sbcsdata_CS_ISO8859_13 },
-    { S6, 0, '_', 0x80, &sbcsdata_CS_ISO8859_14 },
-    { S6, 0, 'b', 0x80, &sbcsdata_CS_ISO8859_15 },
-    { S6, 0, 'f', 0x80, &sbcsdata_CS_ISO8859_16 },
-    { S6, 0, '~' }, /* empty 96-set */
+    /*
+     * We list these subcharsets in preference order for output.
+     * Since the best-defined use of ISO 2022 output is compound
+     * text, we'll use a preference order which matches that. So we
+     * begin with the charsets defined in the compound text spec.
+     */
+    { S4, 0, 'B', CCS, 0x00, &sbcsdata_CS_ASCII },
+    { S6, 0, 'A', CCS, 0x80, &sbcsdata_CS_ISO8859_1 },
+    { S6, 0, 'B', CCS, 0x80, &sbcsdata_CS_ISO8859_2 },
+    { S6, 0, 'C', CCS, 0x80, &sbcsdata_CS_ISO8859_3 },
+    { S6, 0, 'D', CCS, 0x80, &sbcsdata_CS_ISO8859_4 },
+    { S6, 0, 'F', CCS, 0x80, &sbcsdata_CS_ISO8859_7 },
+    { S6, 0, 'G', CCS, 0x80, &sbcsdata_CS_ISO8859_6 },
+    { S6, 0, 'H', CCS, 0x80, &sbcsdata_CS_ISO8859_8 },
+    { S6, 0, 'L', CCS, 0x80, &sbcsdata_CS_ISO8859_5 },
+    { S6, 0, 'M', CCS, 0x80, &sbcsdata_CS_ISO8859_9 },
+    { S4, 0, 'I', CCS, 0x80, &sbcsdata_CS_JISX0201 },
+    { S4, 0, 'J', CCS, 0x00, &sbcsdata_CS_JISX0201 },
+    { M4, 0, 'A', CCS, -0x21, 0, &gb2312_to_unicode, &unicode_to_gb2312, -1 },
+    { M4, 0, 'B', CCS, -0x21, 0, &jisx0208_to_unicode, &unicode_to_jisx0208, -1 },
+    { M4, 0, 'C', CCS, -0x21, 0, &ksx1001_to_unicode, &unicode_to_ksx1001, -1 },
+    { M4, 0, 'D', CCS, -0x21, 0, &jisx0212_to_unicode, &unicode_to_jisx0212, -1 },
+
+    /*
+     * Next, other reasonably standard things: the rest of the ISO
+     * 8859 sets, UK-ASCII, and CNS 11643.
+     */
+    { S6, 0, 'T', COS, 0x80, &sbcsdata_CS_ISO8859_11 },
+    { S6, 0, 'V', COS, 0x80, &sbcsdata_CS_ISO8859_10 },
+    { S6, 0, 'Y', COS, 0x80, &sbcsdata_CS_ISO8859_13 },
+    { S6, 0, '_', COS, 0x80, &sbcsdata_CS_ISO8859_14 },
+    { S6, 0, 'b', COS, 0x80, &sbcsdata_CS_ISO8859_15 },
+    { S6, 0, 'f', COS, 0x80, &sbcsdata_CS_ISO8859_16 },
+    { S4, 0, 'A', COS, 0x00, &sbcsdata_CS_BS4730 },
+    { M4, 0, 'G', COS, -0x21, 0, &cns11643_1_to_unicode, DEPLANARISE(&unicode_to_cns11643), 0 },
+    { M4, 0, 'H', COS, -0x21, 0, &cns11643_2_to_unicode, DEPLANARISE(&unicode_to_cns11643), 1 },
+    { M4, 0, 'I', COS, -0x21, 0, &cns11643_3_to_unicode, DEPLANARISE(&unicode_to_cns11643), 2 },
+    { M4, 0, 'J', COS, -0x21, 0, &cns11643_4_to_unicode, DEPLANARISE(&unicode_to_cns11643), 3 },
+    { M4, 0, 'K', COS, -0x21, 0, &cns11643_5_to_unicode, DEPLANARISE(&unicode_to_cns11643), 4 },
+    { M4, 0, 'L', COS, -0x21, 0, &cns11643_6_to_unicode, DEPLANARISE(&unicode_to_cns11643), 5 },
+    { M4, 0, 'M', COS, -0x21, 0, &cns11643_7_to_unicode, DEPLANARISE(&unicode_to_cns11643), 6 },
+
+    /*
+     * Private-use designations: DEC private sets and Emacs's Big5
+     * abomination.
+     */
+    { S4, 0, '0', CPU, 0x00, &sbcsdata_CS_DEC_GRAPHICS },
+    { S4, 0, '<', CPU, 0x80, &sbcsdata_CS_DEC_MCS },
+    { M4, 0, '0', CPU, -0x21, 0, &emacs_big5_1_to_unicode, DEPLANARISE(&unicode_to_emacs_big5), 1 },
+    { M4, 0, '1', CPU, -0x21, 0, &emacs_big5_2_to_unicode, DEPLANARISE(&unicode_to_emacs_big5), 2 },
+
+    /*
+     * Ben left this conditioned out without explanation,
+     * presumably on the grounds that we don't have a translation
+     * table for it.
+     */
 #if 0
-    { M4, 0, '@' }, /* JIS C 6226-1978 */
+    { M4, 0, '@', CNU }, /* JIS C 6226-1978 */
 #endif
-    { M4, 0, '0', -0x21, 0, &emacs_big5_1_to_unicode },
-    { M4, 0, '1', -0x21, 0, &emacs_big5_2_to_unicode },
-    { M4, 0, 'A', -0x21, 0, &gb2312_to_unicode },
-    { M4, 0, 'B', -0x21, 0, &jisx0208_to_unicode },
-    { M4, 0, 'C', -0x21, 0, &ksx1001_to_unicode },
-    { M4, 0, 'D', -0x21, 0, &jisx0212_to_unicode },
-    { M4, 0, 'G', -0x21, 0, &cns11643_1_to_unicode },
-    { M4, 0, 'H', -0x21, 0, &cns11643_2_to_unicode },
-    { M4, 0, 'I', -0x21, 0, &cns11643_3_to_unicode },
-    { M4, 0, 'J', -0x21, 0, &cns11643_4_to_unicode },
-    { M4, 0, 'K', -0x21, 0, &cns11643_5_to_unicode },
-    { M4, 0, 'L', -0x21, 0, &cns11643_6_to_unicode },
-    { M4, 0, 'M', -0x21, 0, &cns11643_7_to_unicode },
-    { M4, 0, '~', 0, 0, &null_dbcs_to_unicode }, /* empty 94^n-set */
-    { M6, 0, '~', 0, 0, &null_dbcs_to_unicode }, /* empty 96^n-set */
+
+    /*
+     * Finally, fallback entries for null character sets.
+     */
+    { S4, 0, '~', CNU },
+    { S6, 0, '~', CNU }, /* empty 96-set */
+    { M4, 0, '~', CNU, 0, 0, &null_dbcs_to_unicode, &unicode_to_null_dbcs, -1 }, /* empty 94^n-set */
+    { M6, 0, '~', CNU, 0, 0, &null_dbcs_to_unicode, &unicode_to_null_dbcs, -1 }, /* empty 96^n-set */
 };
 
 static long int null_dbcs_to_unicode(int r, int c)
 {
     return ERROR;
+}
+static int unicode_to_null_dbcs(long int unicode, int *r, int *c)
+{
+    return 0;			       /* failed to convert anything */
 }
 
 /*
@@ -125,6 +201,27 @@ static long int emacs_big5_2_to_unicode(int r, int c)
     c = s % 157;
     if (c >= 64) c += 34; /* Skip over the gap */
     return big5_to_unicode(r, c);
+}
+
+static int unicode_to_emacs_big5(long int unicode, int *p, int *r, int *c)
+{
+    int rr, cc, s;
+    if (!unicode_to_big5(unicode, &rr, &cc))
+	return 0;
+    if (cc >= 64) {
+	cc -= 34;
+	assert(cc >= 64);
+    }
+    s = rr * 157 + cc;
+    if (s >= 40*157) {
+	*p = 2;
+	s -= 40*157;
+    } else {
+	*p = 1;
+    }
+    *r = s / 94;
+    *c = s % 94;
+    return 1;
 }
 
 /* Wrappers for cns11643_to_unicode() */
@@ -259,6 +356,7 @@ static void docs_utf8(long int input_chr,
 
 struct ctext_encoding {
     char const *name;
+    char octets_per_char, enable;
     charset_spec const *subcs;
 };
 
@@ -273,9 +371,9 @@ extern charset_spec const charset_CS_ISO8859_15;
 extern charset_spec const charset_CS_BIG5;
 
 static struct ctext_encoding const ctext_encodings[] = {
-    { "big5-0\2", &charset_CS_BIG5 },
-    { "iso8859-14\2", &charset_CS_ISO8859_14 },
-    { "iso8859-15\2", &charset_CS_ISO8859_15 }
+    { "big5-0\2", 0 /* variable */, CDC, &charset_CS_BIG5 },
+    { "iso8859-14\2", 1, CDC, &charset_CS_ISO8859_14 },
+    { "iso8859-15\2", 1, CDC, &charset_CS_ISO8859_15 }
 };
 
 static void docs_ctext(long int input_chr,
@@ -291,6 +389,16 @@ static void docs_ctext(long int input_chr,
      */
     int n = (state->s0 >> 22) & 0xf, i = (state->s0 >> 26) & 3, oi = i, j;
     int length = (state->s0 >> 8) & 0x3fff;
+
+    /*
+     * Note that we do not bother checking the octets-per-character
+     * byte against the selected charset when reading. It's
+     * extremely unlikely that this code will ever have to deal
+     * with two charset identifiers with the same name and
+     * different octets-per-character values! If it ever happens,
+     * we'll have to edit this file anyway so we can modify the
+     * code then...
+     */
 
     if (!length) {
 	/* Haven't read length yet */
@@ -363,10 +471,11 @@ static void docs_ctext(long int input_chr,
 }
 
 static void read_iso2022(charset_spec const *charset, long int input_chr,
-			  charset_state *state,
-			  void (*emit)(void *ctx, long int output),
-			  void *emitctx)
+			 charset_state *state,
+			 void (*emit)(void *ctx, long int output),
+			 void *emitctx)
 {
+    struct iso2022_mode const *mode = (struct iso2022_mode *)charset->data;
 
     /* dump_state(state); */
     /*
@@ -410,8 +519,8 @@ static void read_iso2022(charset_spec const *charset, long int input_chr,
 	 */
 	LOCKING_SHIFT(0, LEFT);
 	LOCKING_SHIFT(1, RIGHT);
-	designate(state, 0, S4, 0, 'B');
-	designate(state, 1, S4, 0, 'B');
+	designate(state, 0, mode->ltype, mode->li, mode->lf);
+	designate(state, 1, mode->rtype, mode->ri, mode->rf);
 	designate(state, 2, S4, 0, 'B');
 	designate(state, 3, S4, 0, 'B');
     }
@@ -483,8 +592,9 @@ static void read_iso2022(charset_spec const *charset, long int input_chr,
 		return;
 	    } else {
 		emit(emitctx,
-		     subcs->dbcs_fn(((state->s0 >> 16) & 0x7f) + subcs->offset,
-				    input_7bit + subcs->offset));
+		     subcs->from_dbcs(((state->s0 >> 16) & 0x7f) +
+				      subcs->offset,
+				      input_7bit + subcs->offset));
 	    }
 	} else {
 	    if ((state->s0 & 0x00ff0000L) != 0)
@@ -659,16 +769,428 @@ static void read_iso2022(charset_spec const *charset, long int input_chr,
     }
 }
 
+static void oselect(charset_state *state, int i, int right,
+		    void (*emit)(void *ctx, long int output),
+		    void *emitctx)
+{
+    int shift = (right ? 31-7 : 31-7-7);
+    struct iso2022_subcharset const *subcs = &iso2022_subcharsets[i];
+
+    if (((state->s1 >> shift) & 0x7F) != i) {
+	state->s1 &= ~(0x7FL << shift);
+	state->s1 |= (i << shift);
+
+	if (emit) {
+	    emit(emitctx, ESC);
+	    if (subcs->type == M4 || subcs->type == M6)
+		emit(emitctx, '$');
+	    if (subcs->type == S6 || subcs->type == M6) {
+		assert(right);
+		emit(emitctx, '-');
+	    } else if (right) {
+		emit(emitctx, ')');
+	    } else {
+		emit(emitctx, '(');
+	    }
+	    if (subcs->i)
+		emit(emitctx, subcs->i);
+	    emit(emitctx, subcs->f);
+	}
+    }
+}
+
+static void docs_char(charset_state *state,
+		      void (*emit)(void *ctx, long int output),
+		      void *emitctx, int cset, char *data, int datalen)
+{
+    int curr_cset, currlen, i;
+
+    /*
+     * cset is the index into ctext_encodings[]. It can also be -1
+     * to mean DOCS UTF-8, or -2 to mean no DOCS (ordinary 2022).
+     * In the latter case, `chr' is ignored.
+     */
+
+    /*
+     * First, terminate a DOCS segment if necessary. We always have
+     * to terminate a DOCS segment if one is active and we're about
+     * to switch to a different one; we might also have to
+     * terminate a length-encoded DOCS segment if we've run out of
+     * storage space to accumulate characters in it.
+     */
+    curr_cset = ((state->s1 >> 14) & 7) - 2;
+    currlen = ((state->s1 >> 11) & 7);
+    if ((curr_cset != -2 && curr_cset != cset) ||
+	(curr_cset >= 0 && currlen + datalen > 5)) {
+	if (curr_cset == -1) {
+	    /*
+	     * Terminating DOCS UTF-8 is easy.
+	     */
+	    emit(emitctx, ESC);
+	    emit(emitctx, '%');
+	    emit(emitctx, '@');
+	} else {
+	    int len;
+
+	    /*
+	     * To terminate a length-encoded DOCS segment we must
+	     * actually output the whole thing.
+	     */
+	    emit(emitctx, ESC);
+	    emit(emitctx, '%');
+	    emit(emitctx, '/');
+	    emit(emitctx, '0' + ctext_encodings[curr_cset].octets_per_char);
+	    len = currlen + datalen +
+		strlen(ctext_encodings[curr_cset].name);
+	    assert(len < (1 << 14));
+	    emit(emitctx, 0x80 | ((len >> 7) & 0x7F));
+	    emit(emitctx, 0x80 | ((len     ) & 0x7F));
+	    /* The name stored in ctext_encodings[] includes the trailing \2 */
+	    for (i = 0; ctext_encodings[curr_cset].name[i]; i++)
+		emit(emitctx, ctext_encodings[curr_cset].name[i]);
+	    for (i = 0; i < currlen; i++)
+		emit(emitctx,
+		     (i == 0 ? state->s1 : state->s0 >> (8*(4-i))) & 0xFF);
+	    for (i = 0; i < datalen; i++)
+		emit(emitctx, data[i]);
+
+	    /*
+	     * We've now dealt with the input data, so clear it so
+	     * we don't try to do so again below.
+	     */
+	    datalen = 0;
+	}
+	curr_cset = -2;
+    }
+
+    /*
+     * Now, start a DOCS segment if necessary.
+     */
+    if (curr_cset != cset) {
+	assert(cset != -2);
+	if (cset == -1) {
+	    /*
+	     * Start DOCS UTF-8.
+	     */
+	    emit(emitctx, ESC);
+	    emit(emitctx, '%');
+	    emit(emitctx, 'G');
+	} else {
+	    /*
+	     * Starting a length-encoded DOCS segment is simply a
+	     * matter of setting our stored length counter to zero.
+	     */
+	    currlen = 0;
+	    state->s1 &= ~(7 << 11);
+	    state->s1 &= ~0xFF;
+	    state->s0 = 0;
+	}
+    }
+    state->s1 &= ~(7 << 14);
+    assert((cset+2) >= 0 && (cset+2) < 8);
+    state->s1 |= ((cset+2) << 14);
+
+    /*
+     * Now we're in the right DOCS state. Actually deal with the
+     * input data, if we haven't already done so above.
+     */
+    if (datalen > 0) {
+	assert(cset != 2);
+	if (cset == -1) {
+	    /*
+	     * In DOCS UTF-8, we output data as soon as we get it.
+	     */
+	    for (i = 0; i < datalen; i++)
+		emit(emitctx, data[i]);
+	} else {
+	    /*
+	     * In length-encoded DOCS, we just store our data and
+	     * bide our time. It'll all be output when we fill up
+	     * or switch to another character set.
+	     */
+	    assert(currlen + datalen <= 5);   /* overflow handled already */
+	    for (i = 0; i < datalen; i++) {
+		if (currlen + i == 0)
+		    state->s1 |= data[i] & 0xFF;
+		else
+		    state->s0 |= (data[i] & 0xFF) << (8*(4-(currlen+i)));
+	    }
+	    currlen += datalen;
+	    assert(currlen >= 0 && currlen < 8);
+	    state->s1 &= ~(7 << 11);
+	    state->s1 |= (currlen << 11);
+	}
+    }
+}
+
+static void write_to_pointer(void *ctx, long int output)
+{
+    char **ptr = (char **)ctx;
+    *(*ptr)++ = output;
+}
+
+/*
+ * Writing full ISO-2022 is not useful in very many circumstances.
+ * One of the few situations in which it _is_ useful is generating
+ * X11 COMPOUND_TEXT; therefore, this writing function will obey
+ * the compound text restrictions and hence output the subset of
+ * ISO-2022 that's usable in that context.
+ * 
+ * The subset in question is roughly that we use GL/GR for G0/G1
+ * always, and that the _only_ escape sequences we output (other
+ * than the occasional DOCS) are those which designate different
+ * subcharsets into G0 and G1. There are additional constraints
+ * about which things go in which container; see below.
+ * 
+ * FIXME: this wants some decent tests to be written, and also the
+ * exact output policy for compound text wants thinking about more
+ * carefully.
+ */
 static int write_iso2022(charset_spec const *charset, long int input_chr,
 			 charset_state *state,
 			 void (*emit)(void *ctx, long int output),
 			 void *emitctx)
 {
+    int i;
+    struct iso2022_subcharset const *subcs;
+    struct iso2022_mode const *mode = (struct iso2022_mode *)charset->data;
+    to_dbcs_planar_t last_planar_dbcs = NULL;
+    int last_p, last_r, last_c;
+    long int c1, c2;
+
+    /*
+     * For output, I allocate the state variables as follows:
+     * 
+     *  s1[31] == 1 if output state has been initialised
+     *  s1[30:24] == G1 charset (always in GR)
+     *  s1[23:17] == G0 charset (always in GL)
+     *  s1[16:14] == DOCS index plus 2 (because -1 and -2 are special)
+     *  s1[13:11] == number of DOCS accumulated characters (up to five)
+     *  s1[7:0] + s0[31:0] == DOCS collected characters
+     */
+
+    if (!state->s1) {
+	state->s0 = 0x00000000UL;
+	state->s1 = 0x80000000UL;
+	/*
+	 * Start with US-ASCII in GL and also in GR.
+	 */
+	for (i = 0; i < lenof(iso2022_subcharsets); i++) {
+	    subcs = &iso2022_subcharsets[i];
+	    if (subcs->type == mode->ltype &&
+		subcs->i == mode->li &&
+		subcs->f == mode->lf)
+		oselect(state, i, FALSE, NULL, NULL);
+	    if (subcs->type == mode->rtype &&
+		subcs->i == mode->ri &&
+		subcs->f == mode->rf)
+		oselect(state, i, TRUE, NULL, NULL);
+	}
+    }
+
+    if (input_chr == -1) {
+	/*
+	 * Special case: reset encoding state.
+	 */
+	docs_char(state, emit, emitctx, -2, NULL, 0);   /* leave DOCS */
+
+	for (i = 0; i < lenof(iso2022_subcharsets); i++) {
+	    subcs = &iso2022_subcharsets[i];
+	    if (subcs->type == mode->ltype &&
+		subcs->i == mode->li &&
+		subcs->f == mode->lf)
+		oselect(state, i, FALSE, emit, emitctx);
+	    if (subcs->type == mode->rtype &&
+		subcs->i == mode->ri &&
+		subcs->f == mode->rf)
+		oselect(state, i, TRUE, emit, emitctx);
+	}
+	return TRUE;
+    }
+
+    /*
+     * Special-case characters: Space, Delete, and anything in C0
+     * or C1 are output unchanged.
+     */
+    if (input_chr <= 0x20 || (input_chr >= 0x7F && input_chr < 0xA0)) {
+	emit(emitctx, input_chr);
+	return TRUE;
+    }
+
+    /*
+     * Analyse the input character and work out which subcharset it
+     * belongs to.
+     */
+    for (i = 0; i < lenof(iso2022_subcharsets); i++) {
+	subcs = &iso2022_subcharsets[i];
+	if (!(mode->enable_mask & (1 << subcs->enable)))
+	    continue;		       /* this charset is disabled */
+	if (subcs->sbcs_base) {
+	    c1 = sbcs_from_unicode(subcs->sbcs_base, input_chr);
+	    c1 -= subcs->offset;
+	    if (c1 >= 0x20 && c1 <= 0x7f) {
+		c2 = 0;
+		break;
+	    }
+	} else if (subcs->to_dbcs) {
+	    if (subcs->to_dbcs_plane >= 0) {
+		/*
+		 * Since multiplanar DBCSes almost by definition
+		 * involve several entries in iso2022_subcharsets
+		 * with the same to_dbcs function and different
+		 * plane values, we remember the last such function
+		 * we called and what its result was, so that we
+		 * don't (for example) have to call
+		 * unicode_to_cns11643 seven times.
+		 */
+		if (last_planar_dbcs != REPLANARISE(subcs->to_dbcs)) {
+		    last_planar_dbcs = REPLANARISE(subcs->to_dbcs);
+		    if (!last_planar_dbcs(input_chr,
+					  &last_p, &last_r, &last_c))
+			last_p = -1;
+		}
+	    } else {
+		last_p = subcs->to_dbcs_plane;
+		if (!subcs->to_dbcs(input_chr, &last_r, &last_c))
+		    last_p = 0;	       /* cannot match since to_dbcs_plane<0 */
+	    }
+
+	    if (last_p == subcs->to_dbcs_plane) {
+		c1 = last_r - subcs->offset;
+		c2 = last_c - subcs->offset;
+		assert(c1 >= 0x20 && c1 <= 0x7f);
+		assert(c2 >= 0x20 && c2 <= 0x7f);
+		break;
+	    }
+	}
+    }
+
+    if (i < lenof(iso2022_subcharsets)) {
+	int right;
+
+	/*
+	 * Our character is represented by c1 (and possibly also
+	 * c2) in subcharset `subcs'. So now we must decide whether
+	 * to designate that character set into G0/GL or G1/GR.
+	 * 
+	 * Any S6 or M6 subcharset has to go in GR because it won't
+	 * fit in GL. In addition, the compound text rules state
+	 * that any single-byte subcharset defined as the
+	 * right-hand half of some SBCS must go in GR.
+	 * 
+	 * M4 subcharsets can go in either half according to the
+	 * rules. I choose to put them in GR always because it's a
+	 * simple policy with reasonable behaviour (facilitates
+	 * switching between them and ASCII).
+	 */
+	right = (subcs->type == S6 || subcs->type == M6 || subcs->type == M4 ||
+		 (subcs->sbcs_base && subcs->offset == 0x80));
+
+	/*
+	 * If we're in a DOCS mode, leave it.
+	 */
+	docs_char(state, emit, emitctx, -2, NULL, 0);
+
+	/*
+	 * If this subcharset is not already selected in that
+	 * container, select it.
+	 */
+	oselect(state, i, right, emit, emitctx);
+
+	/*
+	 * Now emit the actual characters.
+	 */
+	if (right) {
+	    assert(c1 >= 0x20 && c1 <= 0x7f);
+	    emit(emitctx, c1 | 0x80);
+	    if (c2) {
+		assert(c2 >= 0x20 && c2 <= 0x7f);
+		emit(emitctx, c2 | 0x80);
+	    }
+	} else {
+	    assert(c1 > 0x20 && c1 < 0x7f);
+	    emit(emitctx, c1);
+	    if (c2) {
+		assert(c2 > 0x20 && c2 < 0x7f);
+		emit(emitctx, c2);
+	    }
+	}
+
+	return TRUE;
+    }
+
+    /*
+     * Fall back to DOCS.
+     */
+    {
+	char data[10];
+	char *p = data;
+	int i, cs;
+
+	cs = -2;		       /* means failure */
+
+	for (i = 0; i <= lenof(ctext_encodings); i++) {
+	    charset_state substate;
+	    charset_spec const *subcs = ctext_encodings[i].subcs;
+
+	    /*
+	     * We assume that all character sets dealt with by DOCS
+	     * are stateless for output purposes.
+	     */
+	    substate.s1 = substate.s0 = 0;
+	    p = data;
+
+	    if (i < lenof(ctext_encodings)) {
+		if ((mode->enable_mask & (1 << ctext_encodings[i].enable)) &&
+		    subcs->write(subcs, input_chr, &substate,
+				 write_to_pointer, &p)) {
+		    cs = i;
+		    break;
+		}
+	    } else {
+		if ((mode->enable_mask & (1 << CDU)) &&
+		    write_utf8(NULL, input_chr, NULL, write_to_pointer, &p)) {
+		    cs = -1;
+		    break;
+		}
+	    }
+	}
+
+	if (cs != -2) {
+	    docs_char(state, emit, emitctx, cs, data, p - data);
+	    return TRUE;
+	}
+    }
+
     return FALSE;
 }
 
+/*
+ * Full ISO 2022 output with all options on. Not entirely sure what
+ * if anything this is useful for, but here it is anyway. All
+ * output character sets and DOCS variants are permitted; all
+ * containers start out with ASCII in them.
+ */
+static const struct iso2022_mode iso2022_all = {
+    (1<<CCS) | (1<<COS) | (1<<CPU) | (1<<CDC) | (1<<CDU),
+    S4, 0, 'B', S4, 0, 'B',
+};
+
 const charset_spec charset_CS_ISO2022 = {
-    CS_ISO2022, read_iso2022, write_iso2022, NULL
+    CS_ISO2022, read_iso2022, write_iso2022, &iso2022_all
+};
+
+/*
+ * X11 compound text. A subset of output charsets is permitted, and
+ * G1/GR starts off in ISO8859-1.
+ */
+static const struct iso2022_mode iso2022_ctext = {
+    (1<<CCS) | (1<<CDC),
+    S4, 0, 'B', S6, 0, 'A',
+};
+
+const charset_spec charset_CS_CTEXT = {
+    CS_CTEXT, read_iso2022, write_iso2022, &iso2022_ctext
 };
 
 #ifdef TESTMODE

@@ -8,6 +8,12 @@
 #include "internal.h"
 
 /*
+ * The internal read_utf8 and write_utf8 functions in this module
+ * are not static, because they're also called internally from
+ * iso2022.c.
+ */
+
+/*
  * UTF-8 has no associated data, so `charset' may be ignored.
  */
 
@@ -193,10 +199,10 @@ void read_utf8(charset_spec const *charset, long int input_chr,
  * charset_state.
  */
 
-static int write_utf8(charset_spec const *charset, long int input_chr,
-		      charset_state *state,
-		      void (*emit)(void *ctx, long int output),
-		      void *emitctx)
+int write_utf8(charset_spec const *charset, long int input_chr,
+	       charset_state *state,
+	       void (*emit)(void *ctx, long int output),
+	       void *emitctx)
 {
     UNUSEDARG(charset);
     UNUSEDARG(state);
