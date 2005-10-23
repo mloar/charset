@@ -97,6 +97,10 @@ long int sbcs_from_unicode(const struct sbcs_data *sd, long int input_chr);
 void read_utf8(charset_spec const *charset, long int input_chr,
 	       charset_state *state,
 	       void (*emit)(void *ctx, long int output), void *emitctx);
+int write_utf8(charset_spec const *charset, long int input_chr,
+	       charset_state *state,
+	       void (*emit)(void *ctx, long int output),
+	       void *emitctx);
 
 long int big5_to_unicode(int r, int c);
 int unicode_to_big5(long int unicode, int *r, int *c);
