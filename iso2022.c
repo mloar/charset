@@ -22,6 +22,7 @@
 #ifndef ENUM_CHARSETS
 
 #include <assert.h>
+#include <string.h>
 
 #include "charset.h"
 #include "internal.h"
@@ -51,9 +52,30 @@ static int unicode_to_null_dbcs(long int, int *, int *);
 typedef int (*to_dbcs_t)(long int, int *, int *);
 typedef int (*to_dbcs_planar_t)(long int, int *, int *, int *);
 
-/* Cast between to_dbcs_planar_t and to_dbcs_t, type-checking first */
+/*
+ * Cast between to_dbcs_planar_t and to_dbcs_t.
+ * 
+ * I (SGT) originally defined these two macros as follows:
+
 #define DEPLANARISE(x) ( (x) == (to_dbcs_planar_t)NULL, (to_dbcs_t)(x) )
 #define REPLANARISE(x) ( (x) == (to_dbcs_t)NULL, (to_dbcs_planar_t)(x) )
+
+ * When compiled with gcc, this had the effect of type-checking the
+ * input, so that DEPLANARISE would cast a to_dbcs_t to a
+ * to_dbcs_planar_t but cause a compile error if passed any other
+ * input type, and vice versa. However, MSVC felt that this was a
+ * non-constant expression and hence not legal to use in a static
+ * initialiser, and probably rightly so: I haven't had a chance to
+ * check with the C standard, but I'd be surprised if it _required_
+ * compilers to keep an open mind long enough to discover that the
+ * non-constant part of the expression has its result thrown away.
+ * 
+ * I can't think of any other means of performing this type check
+ * which doesn't have the same problem, so I'm taking the type
+ * checks out, with regret.
+ */
+#define DEPLANARISE(x) ( (to_dbcs_t)(x) )
+#define REPLANARISE(x) ( (to_dbcs_planar_t)(x) )
 
 /*
  * Values used in the `enable' field. Each of these identifies a
@@ -169,10 +191,15 @@ const struct iso2022_subcharset {
 
 static long int null_dbcs_to_unicode(int r, int c)
 {
+    UNUSEDARG(r);
+    UNUSEDARG(c);
     return ERROR;
 }
 static int unicode_to_null_dbcs(long int unicode, int *r, int *c)
 {
+    UNUSEDARG(unicode);
+    UNUSEDARG(r);
+    UNUSEDARG(c);
     return 0;			       /* failed to convert anything */
 }
 
@@ -421,7 +448,7 @@ static void docs_ctext(long int input_chr,
 	if (input_chr == 2)
 	    state->s0 = (state->s0 & 0xf0000000) | (i << 26) | (0xf << 22);
     } else if (n != 0xf) {
-	while (j < lenof(ctext_encodings) &&
+	while ((unsigned)j < lenof(ctext_encodings) &&
 	       !memcmp(ctext_encodings[j].name,
 		       ctext_encodings[oi].name, n)) {
 	    if (ctext_encodings[j].name[n] < input_chr)
@@ -429,7 +456,7 @@ static void docs_ctext(long int input_chr,
 	    else
 		break;
 	}
-	if (i >= lenof(ctext_encodings) ||
+	if ((unsigned)i >= lenof(ctext_encodings) ||
 	    memcmp(ctext_encodings[i].name,
 		   ctext_encodings[oi].name, n) ||
 	    ctext_encodings[i].name[n] != input_chr) {
@@ -453,7 +480,7 @@ static void docs_ctext(long int input_chr,
 	assert(i < 4 && n < 16);
 	state->s0 = (state->s0 & 0xf0000000) | (i << 26) | (n << 22);
     } else {
-	if (i >= lenof(ctext_encodings))
+	if ((unsigned)i >= lenof(ctext_encodings))
 	    emit(emitctx, ERROR);
 	else {
 	    charset_state substate;
@@ -776,7 +803,7 @@ static void oselect(charset_state *state, int i, int right,
     int shift = (right ? 31-7 : 31-7-7);
     struct iso2022_subcharset const *subcs = &iso2022_subcharsets[i];
 
-    if (((state->s1 >> shift) & 0x7F) != i) {
+    if (((state->s1 >> shift) & 0x7F) != (unsigned)i) {
 	state->s1 &= ~(0x7FL << shift);
 	state->s1 |= (i << shift);
 
@@ -975,7 +1002,7 @@ static int write_iso2022(charset_spec const *charset, long int input_chr,
 	/*
 	 * Start with US-ASCII in GL and also in GR.
 	 */
-	for (i = 0; i < lenof(iso2022_subcharsets); i++) {
+	for (i = 0; (unsigned)i < lenof(iso2022_subcharsets); i++) {
 	    subcs = &iso2022_subcharsets[i];
 	    if (subcs->type == mode->ltype &&
 		subcs->i == mode->li &&
@@ -994,7 +1021,7 @@ static int write_iso2022(charset_spec const *charset, long int input_chr,
 	 */
 	docs_char(state, emit, emitctx, -2, NULL, 0);   /* leave DOCS */
 
-	for (i = 0; i < lenof(iso2022_subcharsets); i++) {
+	for (i = 0; (unsigned)i < lenof(iso2022_subcharsets); i++) {
 	    subcs = &iso2022_subcharsets[i];
 	    if (subcs->type == mode->ltype &&
 		subcs->i == mode->li &&
@@ -1021,7 +1048,7 @@ static int write_iso2022(charset_spec const *charset, long int input_chr,
      * Analyse the input character and work out which subcharset it
      * belongs to.
      */
-    for (i = 0; i < lenof(iso2022_subcharsets); i++) {
+    for (i = 0; (unsigned)i < lenof(iso2022_subcharsets); i++) {
 	subcs = &iso2022_subcharsets[i];
 	if (!(mode->enable_mask & (1 << subcs->enable)))
 	    continue;		       /* this charset is disabled */
@@ -1065,7 +1092,7 @@ static int write_iso2022(charset_spec const *charset, long int input_chr,
 	}
     }
 
-    if (i < lenof(iso2022_subcharsets)) {
+    if ((unsigned)i < lenof(iso2022_subcharsets)) {
 	int right;
 
 	/*
@@ -1129,7 +1156,7 @@ static int write_iso2022(charset_spec const *charset, long int input_chr,
 
 	cs = -2;		       /* means failure */
 
-	for (i = 0; i <= lenof(ctext_encodings); i++) {
+	for (i = 0; (unsigned)i <= lenof(ctext_encodings); i++) {
 	    charset_state substate;
 	    charset_spec const *subcs = ctext_encodings[i].subcs;
 
@@ -1140,7 +1167,7 @@ static int write_iso2022(charset_spec const *charset, long int input_chr,
 	    substate.s1 = substate.s0 = 0;
 	    p = data;
 
-	    if (i < lenof(ctext_encodings)) {
+	    if ((unsigned)i < lenof(ctext_encodings)) {
 		if ((mode->enable_mask & (1 << ctext_encodings[i].enable)) &&
 		    subcs->write(subcs, input_chr, &substate,
 				 write_to_pointer, &p)) {
