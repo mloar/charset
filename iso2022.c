@@ -53,29 +53,41 @@ typedef int (*to_dbcs_t)(long int, int *, int *);
 typedef int (*to_dbcs_planar_t)(long int, int *, int *, int *);
 
 /*
- * Cast between to_dbcs_planar_t and to_dbcs_t.
+ * These macros cast between to_dbcs_planar_t and to_dbcs_t, in
+ * such a way as to cause a compile-time error if the input is not
+ * of the appropriate type.
  * 
- * I (SGT) originally defined these two macros as follows:
-
-#define DEPLANARISE(x) ( (x) == (to_dbcs_planar_t)NULL, (to_dbcs_t)(x) )
-#define REPLANARISE(x) ( (x) == (to_dbcs_t)NULL, (to_dbcs_planar_t)(x) )
-
- * When compiled with gcc, this had the effect of type-checking the
- * input, so that DEPLANARISE would cast a to_dbcs_t to a
- * to_dbcs_planar_t but cause a compile error if passed any other
- * input type, and vice versa. However, MSVC felt that this was a
- * non-constant expression and hence not legal to use in a static
- * initialiser, and probably rightly so: I haven't had a chance to
- * check with the C standard, but I'd be surprised if it _required_
- * compilers to keep an open mind long enough to discover that the
- * non-constant part of the expression has its result thrown away.
+ * Defining these portably is quite fiddly. My first effort was as
+ * follows:
+ *   #define DEPLANARISE(x) ( (x) == (to_dbcs_planar_t)NULL, (to_dbcs_t)(x) )
  * 
- * I can't think of any other means of performing this type check
- * which doesn't have the same problem, so I'm taking the type
- * checks out, with regret.
+ * so that the comparison on the left of the comma provokes the
+ * type check error, and the cast on the right is the actual
+ * desired result.
+ * 
+ * gcc was entirely happy with this. However, when used in a static
+ * initialiser, MSVC objected - justifiably - that the first half
+ * of the comma expression wasn't constant and thus the expression
+ * as a whole was not a constant expression. We can get round this
+ * by enclosing the comparison in `sizeof', so that it isn't
+ * actually evaluated.
+ * 
+ * But then we run into a second problem, which is that C actually
+ * disallows the use of the comma operator within a constant
+ * expression for any purpose at all! Presumably this is on the
+ * basis that its purpose is to have side effects and constant
+ * expressions can't; unfortunately, this specific case is one in
+ * which the desired side effect is a compile-time rather than a
+ * run-time one.
+ * 
+ * We are permitted to use ?:, however, and that works quite well
+ * since the actual result of the sizeof expression _is_ evaluable
+ * at compile time. So here's my final answer, with the unfortunate
+ * remaining problem of evaluating its arguments multiple times:
  */
-#define DEPLANARISE(x) ( (to_dbcs_t)(x) )
-#define REPLANARISE(x) ( (to_dbcs_planar_t)(x) )
+#define TYPECHECK(x,y) ( sizeof((x)) == sizeof((x)) ? (y) : (y) )
+#define DEPLANARISE(x) TYPECHECK((x) == (to_dbcs_planar_t)NULL, (to_dbcs_t)(x))
+#define REPLANARISE(x) TYPECHECK((x) == (to_dbcs_t)NULL, (to_dbcs_planar_t)(x))
 
 /*
  * Values used in the `enable' field. Each of these identifies a
@@ -530,9 +542,9 @@ static void read_iso2022(charset_spec const *charset, long int input_chr,
 #define LEFT 30
 #define RIGHT 28
 #define LOCKING_SHIFT(n,side) \
-	(state->s1 = (state->s1 & ~(3L<<(side))) | ((n ## L)<<(side)))
-#define MODE ((state->s0 & 0xe0000000L) >> 29)
-#define ENTER_MODE(m) (state->s0 = (state->s0 & ~0xe0000000L) | ((m)<<29))
+	(state->s1 = (state->s1 & ~(3UL<<(side))) | ((n ## UL)<<(side)))
+#define MODE ((state->s0 & 0xe0000000UL) >> 29)
+#define ENTER_MODE(m) (state->s0 = (state->s0 & ~0xe0000000UL) | ((unsigned long)(m)<<29))
 #define SINGLE_SHIFT(n) ENTER_MODE(SS2CHAR - 2 + (n))
 #define ASSERT_IDLE do {						\
 	if (state->s0 != 0) emit(emitctx, ERROR);			\
