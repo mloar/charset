@@ -47,6 +47,7 @@ static const struct {
     { "ISO-8859-16", CS_ISO8859_16, 1 },
     { "CP437", CS_CP437, 1 },
     { "CP850", CS_CP850, 1 },
+    { "CP866", CS_CP866, 1 },
     { "CP1250", CS_CP1250, 1 },
     { "Win1250", CS_CP1250, 0 },
     { "CP1251", CS_CP1251, 1 },
