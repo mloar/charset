@@ -2,11 +2,10 @@
  * iso2022.c - support for ISO/IEC 2022 (alias ECMA-35).
  *
  * This isn't a complete implementation of ISO/IEC 2022, but it's
- * close.  It only handles decoding, because a fully general encoder
- * isn't really useful.  It can decode 8-bit and 7-bit versions, with
- * support for single-byte and multi-byte character sets, all four
- * containers (G0, G1, G2, and G3), using both single-shift and
- * locking-shift sequences.
+ * close.  It can decode 8-bit and 7-bit versions, with support for
+ * single-byte and multi-byte character sets, all four containers
+ * (G0, G1, G2, and G3), using both single-shift and locking-shift
+ * sequences.
  *
  * The general principle is that any valid ISO/IEC 2022 sequence
  * should either be correctly decoded or should emit an ERROR.  The
