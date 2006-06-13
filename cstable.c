@@ -7,6 +7,9 @@
  * libcharset _package_, using libcharset internals.
  */
 
+#include <stdio.h>
+#include <string.h>
+
 #include "charset.h"
 #include "internal.h"
 #include "sbcsdat.h"
@@ -19,14 +22,25 @@ static charset_spec const *const cs_table[] = {
 #include "enum.c"
 #undef ENUM_CHARSET
 };
+static const char *const cs_names[] = {
+#define ENUM_CHARSET(x) #x,
+#include "enum.c"
+#undef ENUM_CHARSET
+};
 
 int main(int argc, char **argv)
 {
     long int c;
+    int internal_names = FALSE;
     int verbose = FALSE;
 
-    if (argc > 1 && !strcmp(argv[1], "-v"))
-	verbose = TRUE;
+    while (--argc) {
+        char *p = *++argv;
+        if (!strcmp(p, "-i"))
+            internal_names = TRUE;
+        else if (!strcmp(p, "-v"))
+            verbose = TRUE;
+    }
 
     for (c = 0; c < 0x30000; c++) {
 	int i, plane, row, col, chr;
@@ -41,14 +55,18 @@ int main(int argc, char **argv)
 	    if (cs_table[i]->read == read_sbcs &&
 		(chr = sbcs_from_unicode(cs_table[i]->data, c)) != ERROR) {
 		printf("%s %s", sep,
-		       charset_to_localenc(cs_table[i]->charset));
+		       (internal_names ? cs_names[i] :
+			charset_to_localenc(cs_table[i]->charset)));
 		if (verbose)
 		    printf("[%d]", chr);
 		sep = ";";
 	    }
 
 	/*
-	 * Look up individually in MBCS base charsets.
+	 * Look up individually in MBCS base charsets. The
+	 * `internal_names' flag does not affect these, because
+	 * MBCS base charsets aren't directly encoded by CS_*
+	 * constants.
 	 */
 	if (unicode_to_big5(c, &row, &col)) {
 	    printf("%s Big5", sep);
@@ -56,6 +74,7 @@ int main(int argc, char **argv)
 		printf("[%d,%d]", row, col);
 	    sep = ";";
 	}
+
 	if (unicode_to_gb2312(c, &row, &col)) {
 	    printf("%s GB2312", sep);
 	    if (verbose)
