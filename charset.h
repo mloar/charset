@@ -198,6 +198,13 @@ int charset_from_macenc(int script, int region, int sysvers,
 			const char *fontname);
 
 /*
+ * Convert GNU Emacs coding system symbol to and from our charset
+ * identifiers.
+ */
+const char *charset_to_emacsenc(int charset);
+int charset_from_emacsenc(const char *name);
+
+/*
  * Upgrade a charset identifier to a superset charset which is
  * often confused with it. For example, people whose MUAs report
  * their mail as ASCII or ISO8859-1 often in practice turn out to

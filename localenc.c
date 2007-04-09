@@ -145,6 +145,8 @@ int charset_from_localenc(const char *name)
 	return i;
     if ( (i = charset_from_xenc(name)) != CS_NONE)
 	return i;
+    if ( (i = charset_from_emacsenc(name)) != CS_NONE)
+	return i;
 
     for (i = 0; i < (int)lenof(localencs); i++) {
 	const char *p, *q;
