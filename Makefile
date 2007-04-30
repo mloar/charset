@@ -103,6 +103,10 @@ $(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)cp949.o: \
 	$(LIBCHARSET_SRCDIR)cp949.c
 	$(CC) $(CFLAGS) $(MD) -c -o $@ $<
 
+$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)emacsenc.o: \
+	$(LIBCHARSET_SRCDIR)emacsenc.c
+	$(CC) $(CFLAGS) $(MD) -c -o $@ $<
+
 $(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)euc.o: \
 	$(LIBCHARSET_SRCDIR)euc.c
 	$(CC) $(CFLAGS) $(MD) -c -o $@ $<
