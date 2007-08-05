@@ -135,6 +135,13 @@ extern const charset_state charset_init_state;
  * NULL, `errlen' will be ignored, and the library will choose
  * something sensible to do on its own. For Unicode, this will be
  * U+FFFD (REPLACEMENT CHARACTER).
+ * 
+ * `output' may be NULL, in which case the entire translation will
+ * be performed in theory (e.g. a dry run to work out how much
+ * space needs to be allocated for the real thing). `outlen' may
+ * also be negative, indicating an unlimited buffer length
+ * (although this is almost certainly unwise if `output' is _not_
+ * NULL).
  */
 
 int charset_to_unicode(const char **input, int *inlen,
@@ -165,6 +172,13 @@ int charset_to_unicode(const char **input, int *inlen,
  * If `input' is NULL, this routine will output the necessary bytes
  * to reset the encoding state in any way which might be required
  * at the end of an output piece of text.
+ * 
+ * `output' may be NULL, in which case the entire translation will
+ * be performed in theory (e.g. a dry run to work out how much
+ * space needs to be allocated for the real thing). `outlen' may
+ * also be negative, indicating an unlimited buffer length
+ * (although this is almost certainly unwise if `output' is _not_
+ * NULL).
  */
 
 int charset_from_unicode(const wchar_t **input, int *inlen,

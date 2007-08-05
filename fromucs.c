@@ -8,6 +8,7 @@
 struct charset_emit_param {
     char *output;
     int outlen;
+    int writtenlen;
     int stopped;
 };
 
@@ -15,9 +16,12 @@ static void charset_emit(void *ctx, long int output)
 {
     struct charset_emit_param *param = (struct charset_emit_param *)ctx;
 
-    if (param->outlen > 0) {
-	*param->output++ = output;
-	param->outlen--;
+    if (param->outlen != 0) {
+	if (param->output)
+	    *param->output++ = output;
+	if (param->outlen > 0)
+	    param->outlen--;
+	param->writtenlen++;
     } else {
 	param->stopped = 1;
     }
@@ -39,6 +43,7 @@ int charset_from_unicode(const wchar_t **input, int *inlen,
 
     param.output = output;
     param.outlen = outlen;
+    param.writtenlen = 0;
     param.stopped = 0;
 
     if (state)
@@ -47,7 +52,7 @@ int charset_from_unicode(const wchar_t **input, int *inlen,
 	*error = FALSE;
 
     while (*inlen > 0) {
-	int lenbefore = param.output - output;
+	int lenbefore = param.writtenlen;
 	int ret;
 
 	if (input)
@@ -78,5 +83,5 @@ int charset_from_unicode(const wchar_t **input, int *inlen,
 	    (*input)++;
 	(*inlen)--;
     }
-    return param.output - output;
+    return param.writtenlen;
 }

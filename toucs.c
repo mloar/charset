@@ -8,6 +8,7 @@
 struct unicode_emit_param {
     wchar_t *output;
     int outlen;
+    int writtenlen;
     const wchar_t *errstr;
     int errlen;
     int stopped;
@@ -35,11 +36,14 @@ static void unicode_emit(void *ctx, long int output)
 	outlen = 1;
     }
 
-    if (param->outlen >= outlen) {
+    if (param->outlen < 0 || param->outlen >= outlen) {
 	while (outlen > 0) {
-	    *param->output++ = *p++;
-	    param->outlen--;
+	    if (param->output)
+		*param->output++ = *p++;
+	    if (param->outlen > 0)
+		param->outlen--;
 	    outlen--;
+	    param->writtenlen++;
 	}
     } else {
 	param->stopped = 1;
@@ -59,13 +63,14 @@ int charset_to_unicode(const char **input, int *inlen,
     param.outlen = outlen;
     param.errstr = errstr;
     param.errlen = errlen;
+    param.writtenlen = 0;
     param.stopped = 0;
 
     if (state)
 	localstate = *state;	       /* structure copy */
 
     while (*inlen > 0) {
-	int lenbefore = param.output - output;
+	int lenbefore = param.writtenlen;
 	spec->read(spec, (unsigned char)**input, &localstate,
 		   unicode_emit, &param);
 	if (param.stopped) {
@@ -83,5 +88,5 @@ int charset_to_unicode(const char **input, int *inlen,
 	(*inlen)--;
     }
 
-    return param.output - output;
+    return param.writtenlen;
 }
