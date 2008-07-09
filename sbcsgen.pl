@@ -35,6 +35,7 @@ my @sortpriority = ();
 
 while (<FOO>) {
     chomp;
+    y/\r\n//; # robustness in the face of strange line endings
     if (/^charset (.*)$/) {
 	$charsetname = $1;
 	@vals = ();
