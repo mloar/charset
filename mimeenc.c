@@ -181,6 +181,8 @@ static const struct {
     { "866", CS_CP866 },
     { "csIBM866", CS_CP866 },
 
+    { "windows-874", CS_CP874 },       /* WILD */
+
     { "windows-1250", CS_CP1250 },
     { "win-1250", CS_CP1250 },	       /* WILD */
 

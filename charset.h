@@ -34,6 +34,7 @@ typedef enum {
     CS_CP437,
     CS_CP850,
     CS_CP866,
+    CS_CP874,
     CS_CP1250,
     CS_CP1251,
     CS_CP1252,
