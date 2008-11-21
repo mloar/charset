@@ -137,18 +137,18 @@ const struct iso2022_subcharset {
      * text, we'll use a preference order which matches that. So we
      * begin with the charsets defined in the compound text spec.
      */
-    { S4, 0, 'B', CCS, 0x00, &sbcsdata_CS_ASCII },
-    { S6, 0, 'A', CCS, 0x80, &sbcsdata_CS_ISO8859_1 },
-    { S6, 0, 'B', CCS, 0x80, &sbcsdata_CS_ISO8859_2 },
-    { S6, 0, 'C', CCS, 0x80, &sbcsdata_CS_ISO8859_3 },
-    { S6, 0, 'D', CCS, 0x80, &sbcsdata_CS_ISO8859_4 },
-    { S6, 0, 'F', CCS, 0x80, &sbcsdata_CS_ISO8859_7 },
-    { S6, 0, 'G', CCS, 0x80, &sbcsdata_CS_ISO8859_6 },
-    { S6, 0, 'H', CCS, 0x80, &sbcsdata_CS_ISO8859_8 },
-    { S6, 0, 'L', CCS, 0x80, &sbcsdata_CS_ISO8859_5 },
-    { S6, 0, 'M', CCS, 0x80, &sbcsdata_CS_ISO8859_9 },
-    { S4, 0, 'I', CCS, 0x80, &sbcsdata_CS_JISX0201 },
-    { S4, 0, 'J', CCS, 0x00, &sbcsdata_CS_JISX0201 },
+    { S4, 0, 'B', CCS, 0x00, &sbcsdata_CS_ASCII, NULL, NULL, 0 },
+    { S6, 0, 'A', CCS, 0x80, &sbcsdata_CS_ISO8859_1, NULL, NULL, 0 },
+    { S6, 0, 'B', CCS, 0x80, &sbcsdata_CS_ISO8859_2, NULL, NULL, 0 },
+    { S6, 0, 'C', CCS, 0x80, &sbcsdata_CS_ISO8859_3, NULL, NULL, 0 },
+    { S6, 0, 'D', CCS, 0x80, &sbcsdata_CS_ISO8859_4, NULL, NULL, 0 },
+    { S6, 0, 'F', CCS, 0x80, &sbcsdata_CS_ISO8859_7, NULL, NULL, 0 },
+    { S6, 0, 'G', CCS, 0x80, &sbcsdata_CS_ISO8859_6, NULL, NULL, 0 },
+    { S6, 0, 'H', CCS, 0x80, &sbcsdata_CS_ISO8859_8, NULL, NULL, 0 },
+    { S6, 0, 'L', CCS, 0x80, &sbcsdata_CS_ISO8859_5, NULL, NULL, 0 },
+    { S6, 0, 'M', CCS, 0x80, &sbcsdata_CS_ISO8859_9, NULL, NULL, 0 },
+    { S4, 0, 'I', CCS, 0x80, &sbcsdata_CS_JISX0201, NULL, NULL, 0 },
+    { S4, 0, 'J', CCS, 0x00, &sbcsdata_CS_JISX0201, NULL, NULL, 0 },
     { M4, 0, 'A', CCS, -0x21, 0, &gb2312_to_unicode, &unicode_to_gb2312, -1 },
     { M4, 0, 'B', CCS, -0x21, 0, &jisx0208_to_unicode, &unicode_to_jisx0208, -1 },
     { M4, 0, 'C', CCS, -0x21, 0, &ksx1001_to_unicode, &unicode_to_ksx1001, -1 },
@@ -158,13 +158,13 @@ const struct iso2022_subcharset {
      * Next, other reasonably standard things: the rest of the ISO
      * 8859 sets, UK-ASCII, and CNS 11643.
      */
-    { S6, 0, 'T', COS, 0x80, &sbcsdata_CS_ISO8859_11 },
-    { S6, 0, 'V', COS, 0x80, &sbcsdata_CS_ISO8859_10 },
-    { S6, 0, 'Y', COS, 0x80, &sbcsdata_CS_ISO8859_13 },
-    { S6, 0, '_', COS, 0x80, &sbcsdata_CS_ISO8859_14 },
-    { S6, 0, 'b', COS, 0x80, &sbcsdata_CS_ISO8859_15 },
-    { S6, 0, 'f', COS, 0x80, &sbcsdata_CS_ISO8859_16 },
-    { S4, 0, 'A', COS, 0x00, &sbcsdata_CS_BS4730 },
+    { S6, 0, 'T', COS, 0x80, &sbcsdata_CS_ISO8859_11, NULL, NULL, 0 },
+    { S6, 0, 'V', COS, 0x80, &sbcsdata_CS_ISO8859_10, NULL, NULL, 0 },
+    { S6, 0, 'Y', COS, 0x80, &sbcsdata_CS_ISO8859_13, NULL, NULL, 0 },
+    { S6, 0, '_', COS, 0x80, &sbcsdata_CS_ISO8859_14, NULL, NULL, 0 },
+    { S6, 0, 'b', COS, 0x80, &sbcsdata_CS_ISO8859_15, NULL, NULL, 0 },
+    { S6, 0, 'f', COS, 0x80, &sbcsdata_CS_ISO8859_16, NULL, NULL, 0 },
+    { S4, 0, 'A', COS, 0x00, &sbcsdata_CS_BS4730, NULL, NULL, 0 },
     { M4, 0, 'G', COS, -0x21, 0, &cns11643_1_to_unicode, DEPLANARISE(&unicode_to_cns11643), 0 },
     { M4, 0, 'H', COS, -0x21, 0, &cns11643_2_to_unicode, DEPLANARISE(&unicode_to_cns11643), 1 },
     { M4, 0, 'I', COS, -0x21, 0, &cns11643_3_to_unicode, DEPLANARISE(&unicode_to_cns11643), 2 },
@@ -177,8 +177,8 @@ const struct iso2022_subcharset {
      * Private-use designations: DEC private sets and Emacs's Big5
      * abomination.
      */
-    { S4, 0, '0', CPU, 0x00, &sbcsdata_CS_DEC_GRAPHICS },
-    { S4, 0, '<', CPU, 0x80, &sbcsdata_CS_DEC_MCS },
+    { S4, 0, '0', CPU, 0x00, &sbcsdata_CS_DEC_GRAPHICS, NULL, NULL, 0 },
+    { S4, 0, '<', CPU, 0x80, &sbcsdata_CS_DEC_MCS, NULL, NULL, 0 },
     { M4, 0, '0', CPU, -0x21, 0, &emacs_big5_1_to_unicode, DEPLANARISE(&unicode_to_emacs_big5), 1 },
     { M4, 0, '1', CPU, -0x21, 0, &emacs_big5_2_to_unicode, DEPLANARISE(&unicode_to_emacs_big5), 2 },
 
@@ -194,8 +194,8 @@ const struct iso2022_subcharset {
     /*
      * Finally, fallback entries for null character sets.
      */
-    { S4, 0, '~', CNU },
-    { S6, 0, '~', CNU }, /* empty 96-set */
+    { S4, 0, '~', CNU, 0, NULL, NULL, NULL, 0 },
+    { S6, 0, '~', CNU, 0, NULL, NULL, NULL, 0 }, /* empty 96-set */
     { M4, 0, '~', CNU, 0, 0, &null_dbcs_to_unicode, &unicode_to_null_dbcs, -1 }, /* empty 94^n-set */
     { M6, 0, '~', CNU, 0, 0, &null_dbcs_to_unicode, &unicode_to_null_dbcs, -1 }, /* empty 96^n-set */
 };
