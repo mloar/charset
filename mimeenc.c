@@ -272,6 +272,7 @@ static const struct {
     { "Shift_JIS", CS_SHIFT_JIS },
     { "MS_Kanji", CS_SHIFT_JIS },
     { "csShiftJIS", CS_SHIFT_JIS },
+    { "x-sjis", CS_SHIFT_JIS },	       /* WILD */
 
     { "HZ-GB-2312", CS_HZ },
 
