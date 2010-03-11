@@ -1,0 +1,226 @@
+# -*- make -*-
+#
+# NMAKE Makefile for libcharset.
+
+# This Makefile should be sufficient to build libcharset and its
+# demo application all on its own. However, it's also a valid
+# Makefile _fragment_ which can be linked in to another program
+# Makefile to allow libcharset to be built directly into its
+# binary.
+
+# To include this as part of another Makefile, you need to:
+#
+#  - Define $(LIBCHARSET_SRCDIR) to be a directory prefix (i.e.
+#    probably ending in a slash) which allows access to the
+#    libcharset source files.
+#
+#  - Define $(LIBCHARSET_OBJDIR) to be a directory prefix (i.e.
+#    probably ending in a slash) which allows access to the
+#    directory where the libcharset object files need to be put.
+#
+#  - Define $(LIBCHARSET_OBJPFX) to be a filename prefix to be
+#    applied to the libcharset object files (in case, for example,
+#    the file names clash with those of the main application, and
+#    you need to call them cs-*.o to resolve the clash).
+#
+#  - Define $(LIBCHARSET_GENPFX) to be a prefix to be added to
+#    targets such as `all' and `clean'. (Mostly the point of this
+#    is to get those targets out of the way for the Makefile
+#    fragment including us.)
+#
+#  - If you need your compiler to use the -MD flag, define $(MD) to
+#    be `-MD'.
+#
+# This Makefile fragment will then define rules for building each
+# object file, and will in turn define $(LIBCHARSET_OBJS) to be
+# what you need to add to your link line.
+
+!include <Win32.mak>
+
+$(LIBCHARSET_GENPFX)all: \
+	$(LIBCHARSET_OBJDIR)libcharset.lib \
+	$(LIBCHARSET_OBJDIR)convcs \
+	$(LIBCHARSET_OBJDIR)cstable
+
+$(LIBCHARSET_OBJDIR)convcs: $(LIBCHARSET_SRCDIR)test.c \
+	$(LIBCHARSET_OBJDIR)libcharset.lib
+	$(CC) $(CDEBUG) $(CFLAGS) $(CVARSMT) /Fo$(LIBCHARSET_OBJDIR)convcs \
+		$(LIBCHARSET_SRCDIR)test.c \
+		$(LIBCHARSET_OBJDIR)libcharset.lib
+
+$(LIBCHARSET_OBJDIR)cstable: $(LIBCHARSET_SRCDIR)cstable.c \
+	$(LIBCHARSET_OBJDIR)libcharset.lib
+	$(CC) $(CDEBUG) $(CFLAGS) $(CVARSMT) /Fo$(LIBCHARSET_OBJDIR)cstable \
+		$(LIBCHARSET_SRCDIR)cstable.c \
+		$(LIBCHARSET_OBJDIR)libcharset.lib
+
+LIBCHARSET_OBJS = \
+	$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)big5enc.obj \
+	$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)big5set.obj \
+	$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)cns11643.obj \
+	$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)cp949.obj \
+	$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)emacsenc.obj \
+	$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)euc.obj \
+	$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)fromucs.obj \
+	$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)gb2312.obj \
+	$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)hz.obj \
+	$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)iso2022.obj \
+	$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)iso2022s.obj \
+	$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)istate.obj \
+	$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)jisx0208.obj \
+	$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)jisx0212.obj \
+	$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)ksx1001.obj \
+	$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)locale.obj \
+	$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)localenc.obj \
+	$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)macenc.obj \
+	$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)mimeenc.obj \
+	$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)sbcs.obj \
+	$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)sbcsdat.obj \
+	$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)shiftjis.obj \
+	$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)slookup.obj \
+	$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)superset.obj \
+	$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)toucs.obj \
+	$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)utf16.obj \
+	$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)utf7.obj \
+	$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)utf8.obj \
+	$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)xenc.obj \
+	# end of list
+
+$(LIBCHARSET_OBJDIR)libcharset.lib: $(LIBCHARSET_OBJS)
+	lib /out:$@ $(LIBCHARSET_OBJS)
+
+$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)big5enc.obj: \
+	$(LIBCHARSET_SRCDIR)big5enc.c
+	$(CC) $(CDEBUG) $(CFLAGS) $(CVARSMT) $(MD) -c /Fo$@ $**
+
+$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)big5set.obj: \
+	$(LIBCHARSET_SRCDIR)big5set.c
+	$(CC) $(CDEBUG) $(CFLAGS) $(CVARSMT) $(MD) -c /Fo$@ $**
+
+$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)cns11643.obj: \
+	$(LIBCHARSET_SRCDIR)cns11643.c
+	$(CC) $(CDEBUG) $(CFLAGS) $(CVARSMT) $(MD) -c /Fo$@ $**
+
+$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)cp949.obj: \
+	$(LIBCHARSET_SRCDIR)cp949.c
+	$(CC) $(CDEBUG) $(CFLAGS) $(CVARSMT) $(MD) -c /Fo$@ $**
+
+$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)emacsenc.obj: \
+	$(LIBCHARSET_SRCDIR)emacsenc.c
+	$(CC) $(CDEBUG) $(CFLAGS) $(CVARSMT) $(MD) -c /Fo$@ $**
+
+$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)euc.obj: \
+	$(LIBCHARSET_SRCDIR)euc.c
+	$(CC) $(CDEBUG) $(CFLAGS) $(CVARSMT) $(MD) -c /Fo$@ $**
+
+$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)fromucs.obj: \
+	$(LIBCHARSET_SRCDIR)fromucs.c
+	$(CC) $(CDEBUG) $(CFLAGS) $(CVARSMT) $(MD) -c /Fo$@ $**
+
+$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)gb2312.obj: \
+	$(LIBCHARSET_SRCDIR)gb2312.c
+	$(CC) $(CDEBUG) $(CFLAGS) $(CVARSMT) $(MD) -c /Fo$@ $**
+
+$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)hz.obj: \
+	$(LIBCHARSET_SRCDIR)hz.c
+	$(CC) $(CDEBUG) $(CFLAGS) $(CVARSMT) $(MD) -c /Fo$@ $**
+
+$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)iso2022.obj: \
+	$(LIBCHARSET_SRCDIR)iso2022.c \
+	$(LIBCHARSET_OBJDIR)sbcsdat.h
+	$(CC) $(CDEBUG) $(CFLAGS) $(CVARSMT) $(MD) -c /Fo$@ $**
+
+$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)iso2022s.obj: \
+	$(LIBCHARSET_SRCDIR)iso2022s.c \
+	$(LIBCHARSET_OBJDIR)sbcsdat.h
+	$(CC) $(CDEBUG) $(CFLAGS) $(CVARSMT) $(MD) -c /Fo$@ $**
+
+$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)istate.obj: \
+	$(LIBCHARSET_SRCDIR)istate.c
+	$(CC) $(CDEBUG) $(CFLAGS) $(CVARSMT) $(MD) -c /Fo$@ $**
+
+$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)jisx0208.obj: \
+	$(LIBCHARSET_SRCDIR)jisx0208.c
+	$(CC) $(CDEBUG) $(CFLAGS) $(CVARSMT) $(MD) -c /Fo$@ $**
+
+$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)jisx0212.obj: \
+	$(LIBCHARSET_SRCDIR)jisx0212.c
+	$(CC) $(CDEBUG) $(CFLAGS) $(CVARSMT) $(MD) -c /Fo$@ $**
+
+$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)ksx1001.obj: \
+	$(LIBCHARSET_SRCDIR)ksx1001.c
+	$(CC) $(CDEBUG) $(CFLAGS) $(CVARSMT) $(MD) -c /Fo$@ $**
+
+$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)locale.obj: \
+	$(LIBCHARSET_SRCDIR)locale.c
+	$(CC) $(CDEBUG) $(CFLAGS) $(CVARSMT) $(MD) -c /Fo$@ $**
+
+$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)localenc.obj: \
+	$(LIBCHARSET_SRCDIR)localenc.c
+	$(CC) $(CDEBUG) $(CFLAGS) $(CVARSMT) $(MD) -c /Fo$@ $**
+
+$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)macenc.obj: \
+	$(LIBCHARSET_SRCDIR)macenc.c
+	$(CC) $(CDEBUG) $(CFLAGS) $(CVARSMT) $(MD) -c /Fo$@ $**
+
+$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)mimeenc.obj: \
+	$(LIBCHARSET_SRCDIR)mimeenc.c
+	$(CC) $(CDEBUG) $(CFLAGS) $(CVARSMT) $(MD) -c /Fo$@ $**
+
+$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)sbcs.obj: \
+	$(LIBCHARSET_SRCDIR)sbcs.c
+	$(CC) $(CDEBUG) $(CFLAGS) $(CVARSMT) $(MD) -c /Fo$@ $**
+
+$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)shiftjis.obj: \
+	$(LIBCHARSET_SRCDIR)shiftjis.c
+	$(CC) $(CDEBUG) $(CFLAGS) $(CVARSMT) $(MD) -c /Fo$@ $**
+
+$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)slookup.obj: \
+	$(LIBCHARSET_SRCDIR)slookup.c
+	$(CC) $(CDEBUG) $(CFLAGS) $(CVARSMT) $(MD) -c /Fo$@ $**
+
+$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)superset.obj: \
+	$(LIBCHARSET_SRCDIR)superset.c
+	$(CC) $(CDEBUG) $(CFLAGS) $(CVARSMT) $(MD) -c /Fo$@ $**
+
+$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)toucs.obj: \
+	$(LIBCHARSET_SRCDIR)toucs.c
+	$(CC) $(CDEBUG) $(CFLAGS) $(CVARSMT) $(MD) -c /Fo$@ $**
+
+$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)utf16.obj: \
+	$(LIBCHARSET_SRCDIR)utf16.c
+	$(CC) $(CDEBUG) $(CFLAGS) $(CVARSMT) $(MD) -c /Fo$@ $**
+
+$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)utf7.obj: \
+	$(LIBCHARSET_SRCDIR)utf7.c
+	$(CC) $(CDEBUG) $(CFLAGS) $(CVARSMT) $(MD) -c /Fo$@ $**
+
+$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)utf8.obj: \
+	$(LIBCHARSET_SRCDIR)utf8.c
+	$(CC) $(CDEBUG) $(CFLAGS) $(CVARSMT) $(MD) -c /Fo$@ $**
+
+$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)xenc.obj: \
+	$(LIBCHARSET_SRCDIR)xenc.c
+	$(CC) $(CDEBUG) $(CFLAGS) $(CVARSMT) $(MD) -c /Fo$@ $**
+
+# This object file is special, because its source file is itself
+# generated - and therefore goes in the object directory.
+
+$(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)sbcsdat.obj: \
+	$(LIBCHARSET_OBJDIR)sbcsdat.c
+	$(CC) $(CDEBUG) $(CFLAGS) $(CVARSMT) $(MD) -c /Fo$@ $**
+
+$(LIBCHARSET_OBJDIR)sbcsdat.c $(LIBCHARSET_OBJDIR)sbcsdat.h: \
+	$(LIBCHARSET_SRCDIR)sbcs.dat \
+	$(LIBCHARSET_SRCDIR)sbcsgen.pl
+	perl $(LIBCHARSET_SRCDIR)sbcsgen.pl \
+		$(LIBCHARSET_SRCDIR)sbcs.dat \
+		$(LIBCHARSET_OBJDIR)sbcsdat.c \
+		$(LIBCHARSET_OBJDIR)sbcsdat.h
+
+$(LIBCHARSET_GENPFX)clean:
+	-del $(LIBCHARSET_OBJDIR)$(LIBCHARSET_OBJPFX)*.obj \
+		$(LIBCHARSET_OBJDIR)libcharset.lib \
+		$(LIBCHARSET_OBJDIR)sbcsdat.c \
+		$(LIBCHARSET_OBJDIR)sbcsdat.h \
+		$(LIBCHARSET_OBJDIR)convcs
