@@ -33,6 +33,7 @@ typedef enum {
     CS_ISO8859_16,
     CS_CP437,
     CS_CP850,
+    CS_CP852,
     CS_CP866,
     CS_CP874,
     CS_CP1250,
