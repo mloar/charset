@@ -46,7 +46,7 @@ int main(int argc, char **argv)
 	int i, plane, row, col, chr;
 	char const *sep = "";
 
-	printf("U+%04x:", c);
+	printf("U+%04x:", (unsigned)c);
 
 	/*
 	 * Look up in SBCSes.
