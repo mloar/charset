@@ -93,7 +93,8 @@ typedef enum {
     CS_ISO2022,
     CS_BS4730,
     CS_DEC_GRAPHICS,
-    CS_EUC_TW
+    CS_EUC_TW,
+    CS_LIMIT               /* dummy value indicating extent of enum */
 } charset_t;
 
 typedef struct {
@@ -248,5 +249,20 @@ int charset_contains_ascii(int charset);
  * "") to guarantee that this function will do the right thing.)
  */
 int charset_from_locale(void);
+
+/*
+ * This function simply reports whether a charset identifier
+ * corresponds to an actually usable charset. Not everything in the
+ * above enum does: CS_NONE, for a start, and occasionally other slots
+ * in the enum are reserved before they actually go into service.
+ *
+ * This function permits clients to iterate over _all_ supported
+ * charsets by means of a loop such as
+ *
+ *     for (cs = 0; cs < CS_LIMIT; cs++)
+ *         if (charset_exists(cs))
+ *             do_stuff_with(cs);
+ */
+int charset_exists(int charset);
 
 #endif /* charset_charset_h */

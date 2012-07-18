@@ -27,3 +27,8 @@ charset_spec const *charset_find_spec(int charset)
 
     return NULL;
 }
+
+int charset_exists(int charset)
+{
+    return charset_find_spec(charset) != NULL;
+}
