@@ -38,7 +38,8 @@
 $(LIBCHARSET_GENPFX)all: \
 	$(LIBCHARSET_OBJDIR)libcharset.a \
 	$(LIBCHARSET_OBJDIR)convcs \
-	$(LIBCHARSET_OBJDIR)cstable
+	$(LIBCHARSET_OBJDIR)cstable \
+	$(LIBCHARSET_OBJDIR)confuse
 
 $(LIBCHARSET_OBJDIR)convcs: $(LIBCHARSET_SRCDIR)test.c \
 	$(LIBCHARSET_OBJDIR)libcharset.a
@@ -50,6 +51,12 @@ $(LIBCHARSET_OBJDIR)cstable: $(LIBCHARSET_SRCDIR)cstable.c \
 	$(LIBCHARSET_OBJDIR)libcharset.a
 	$(CC) $(CFLAGS) -o $(LIBCHARSET_OBJDIR)cstable \
 		$(LIBCHARSET_SRCDIR)cstable.c \
+		$(LIBCHARSET_OBJDIR)libcharset.a
+
+$(LIBCHARSET_OBJDIR)confuse: $(LIBCHARSET_SRCDIR)confuse.c \
+	$(LIBCHARSET_OBJDIR)libcharset.a
+	$(CC) $(CFLAGS) -o $(LIBCHARSET_OBJDIR)confuse \
+		$(LIBCHARSET_SRCDIR)confuse.c \
 		$(LIBCHARSET_OBJDIR)libcharset.a
 
 LIBCHARSET_OBJS = \
