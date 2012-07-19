@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <locale.h>
 
 #include "charset.h"
 
@@ -23,6 +24,8 @@ int main(int argc, char **argv)
     int nchars;
     int i, j, k, cs;
     const char *sep;
+
+    setlocale(LC_ALL, "");
 
     chars = malloc(argc * sizeof(wchar_t));
     if (!chars) {
@@ -37,6 +40,7 @@ int main(int argc, char **argv)
         char *orig = p;
         char *end;
         int base = 16, semi_ok = 0;
+        wchar_t ch;
 
         if ((p[0] == 'U' || p[0] == 'u') &&
             (p[1] == '-' || p[1] == '+')) {
@@ -50,6 +54,9 @@ int main(int argc, char **argv)
             else
                 base = 10;
             semi_ok = 1;
+        } else if (mbtowc(&ch, p, strlen(p)) == strlen(p)) {
+            chars[nchars++] = ch;
+            continue;
         }
 
         chars[nchars++] = strtoul(p, &end, base);
