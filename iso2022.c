@@ -81,8 +81,7 @@ typedef int (*to_dbcs_planar_t)(long int, int *, int *, int *);
  * 
  * We are permitted to use ?:, however, and that works quite well
  * since the actual result of the sizeof expression _is_ evaluable
- * at compile time. So here's my final answer, with the unfortunate
- * remaining problem of evaluating its arguments multiple times:
+ * at compile time. So here's my final answer:
  */
 #define TYPECHECK(x,y) ( sizeof((x)) == sizeof((x)) ? (y) : (y) )
 #define DEPLANARISE(x) TYPECHECK((x) == (to_dbcs_planar_t)NULL, (to_dbcs_t)(x))
